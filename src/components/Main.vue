@@ -2,18 +2,26 @@
   <el-container>
     <el-aside class="board">
       <el-card class="aside card">
-        <input
-          type="file"
-          id="imageLoader"
-          name="imageLoader"
-          accept=".png, .jpg, .jpeg"
-        />
+        <el-form label-position="top">
+          <el-form-item label="Floor plan">
+            <input type="file" id="imageLoader" accept=".png, .jpg, .jpeg" />
+          </el-form-item>
+          <el-form-item label="Number of seats">
+            <el-input-number v-model="numSeat"></el-input-number>
+          </el-form-item>
+          <el-form-item label="Seat's size">
+            <svg id="svg-seat" width="100%"></svg>
+          </el-form-item>
+          <el-button type="primary" plain round @click="run">Run</el-button>
+        </el-form>
       </el-card>
     </el-aside>
     <el-main class="board">
-      <el-card class="main card">
-        <canvas id="cv"></canvas>
-        <svg id="svg"></svg>
+      <el-card class="card" style="overflow: auto">
+        <div id="main">
+          <canvas id="cv"></canvas>
+          <svg id="svg"></svg>
+        </div>
         <br />
       </el-card>
     </el-main>
@@ -24,6 +32,11 @@
 import * as d3 from 'd3'
 
 export default {
+  data() {
+    return {
+      numSeat: 10
+    }
+  },
   mounted() {
     this.imageLoader = document.getElementById('imageLoader')
     this.imageLoader.addEventListener('change', this.handleImage, false)
@@ -32,8 +45,13 @@ export default {
     this.svg = document.getElementById('svg')
 
     this.init()
+    this.initSvgSeat()
   },
   methods: {
+    run() {
+      console.log(document.querySelectorAll('polygon'))
+      console.log(document.querySelectorAll('.seat-size-input'))
+    },
     handleImage(e) {
       const reader = new FileReader()
       reader.onload = (event) => {
@@ -42,15 +60,18 @@ export default {
           this.canvas.width = img.width
           this.canvas.height = img.height
           this.ctx.drawImage(img, 0, 0)
-          this.svg.setAttribute('width', `${img.width}px`)
-          this.svg.setAttribute('height', `${img.height}px`)
+          this.svg.setAttribute('width', img.width)
+          this.svg.setAttribute('height', img.height)
+
+          const main = document.getElementById('main')
+          main.setAttribute('style', `width: ${img.width}px; height: ${img.height}px`)
         }
         img.src = event.target.result
       }
       reader.readAsDataURL(e.target.files[0])
     },
     init() {
-      const svg = d3.select('svg')
+      const svg = d3.select('#svg')
 
       let dragging = false
       let drawing = false
@@ -150,6 +171,72 @@ export default {
 
         poly.attr('points', newPoints)
       }
+    },
+    initSvgSeat() {
+      const svg = d3.select('#svg-seat')
+      new Rectangle()
+
+      function Rectangle() {
+        const self = this
+        const rectData = [{ x: 80, y: 50 }, { x: 100, y: 70 }]
+        let rect, isDown = false, isDrag = false
+
+        function updateRect() {
+          rect = self.rectangleElement
+          rect.attr('x', rectData[1].x - rectData[0].x > 0 ? rectData[0].x : rectData[1].x)
+          rect.attr('y', rectData[1].y - rectData[0].y > 0 ? rectData[0].y : rectData[1].y)
+          rect.attr('width', Math.abs(rectData[1].x - rectData[0].x))
+          rect.attr('height', Math.abs(rectData[1].y - rectData[0].y))
+
+          const point1 = self.point1.data(rectData)
+          point1.attr('r', 4)
+            .attr('cx', rectData[0].x)
+            .attr('cy', rectData[0].y)
+          const point2 = self.point2.data(rectData)
+          point2.attr('r', 4)
+            .attr('cx', rectData[1].x)
+            .attr('cy', rectData[1].y)
+        }
+
+        function dragRect(e) {
+          for (let i = 0; i < rectData.length; i++) {
+            self.rectangleElement
+              .attr('x', rectData[i].x += e.dx)
+              .attr('y', rectData[i].y += e.dy)
+          }
+          rect.style('cursor', 'move')
+          updateRect()
+        }
+
+        function dragPoint1(e) {
+          self.point1.attr('cx', rectData[0].x += e.dx).attr('cy', rectData[0].y += e.dy)
+          updateRect()
+        }
+
+        function dragPoint2(e) {
+          self.point2.attr('cx', rectData[1].x += e.dx).attr('cy', rectData[1].y += e.dy)
+          updateRect()
+        }
+
+        const dragR = d3.drag().on('drag', dragRect)
+        const dragC1 = d3.drag().on('drag', dragPoint1)
+        const dragC2 = d3.drag().on('drag', dragPoint2)
+
+        self.rectangleElement = svg.append('rect').attr('class', 'seat-size-input').call(dragR)
+        self.point1 = svg.append('circle').attr('class', 'pointC').call(dragC1)
+        self.point2 = svg.append('circle').attr('class', 'pointC').call(dragC2)
+
+        updateRect()
+
+        svg.on('mousedown', function (event) {
+          if (!isDown && !isDrag) {
+            isDrag = false
+          } else {
+            isDrag = true
+          }
+          isDown = !isDown
+        })
+      }
     }
   }
 }
@@ -165,24 +252,48 @@ export default {
   height: calc(100% - 2px);
 }
 
-.main {
+#main {
   overflow: auto;
   position: relative;
+  padding: 2px;
+  height: 50vh;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #cv {
-  outline: #444 2px solid;
-}
-
-#svg {
-  outline: red 2px solid;
+  outline: #666 2px solid;
   position: absolute;
   margin-left: auto;
   margin-right: auto;
   left: 0;
   right: 0;
-  margin-bottom: 20px;
+}
+
+#svg {
+  outline: red 1px solid;
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+}
+
+#svg-seat {
+  outline: #666 2px solid;
 }
 </style>
+
+<style>
+.seat-size-input {
+  fill: lightblue !important;
+  stroke: blue;
+  stroke-width: 1px;
+}
+label {
+  padding: 0 !important;
+}
+</style>
+
 https://gist.github.com/RiseupDev/b07f7ccc1c499efc24e9
-https://stackoverflow.com/questions/8945134/resizing-and-dragging-svg-polygons-dynamically
+http://jsfiddle.net/SunboX/vj4jtdg8/
