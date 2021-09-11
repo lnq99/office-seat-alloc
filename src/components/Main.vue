@@ -7,12 +7,20 @@
             <input type="file" id="imageLoader" accept=".png, .jpg, .jpeg" />
           </el-form-item>
           <el-form-item label="Number of seats">
-            <el-input-number v-model="numSeat"></el-input-number>
+            <el-input-number v-model="numSeat" :min="1"></el-input-number>
           </el-form-item>
           <el-form-item label="Seat's size">
             <svg id="svg-seat" width="100%"></svg>
           </el-form-item>
-          <el-button type="primary" plain round @click="run">Run</el-button>
+          <el-form-item>
+            <el-button type="primary" plain round @click="run">Run</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="danger" plain round>Clear</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="success" plain round>Export</el-button>
+          </el-form-item>
         </el-form>
       </el-card>
     </el-aside>
@@ -49,8 +57,15 @@ export default {
   },
   methods: {
     run() {
-      console.log(document.querySelectorAll('polygon'))
-      console.log(document.querySelectorAll('.seat-size-input'))
+      const seatSizeRect = document.querySelector('.seat-size-input')
+      const polygons = document.querySelectorAll('polygon')
+      const w = seatSizeRect.getAttribute('width')
+      const h = seatSizeRect.getAttribute('height')
+      console.log(w, h)
+      console.log(polygons)
+      for (let polygon of polygons)
+        for (let p of polygon.points)
+          console.log(p)
     },
     handleImage(e) {
       const reader = new FileReader()
@@ -271,7 +286,7 @@ export default {
 }
 
 #svg {
-  outline: red 1px solid;
+  /* outline: red 1px solid; */
   position: absolute;
   margin-left: auto;
   margin-right: auto;
@@ -286,12 +301,16 @@ export default {
 
 <style>
 .seat-size-input {
-  fill: lightblue !important;
+  fill: skyblue !important;
   stroke: blue;
   stroke-width: 1px;
 }
 label {
   padding: 0 !important;
+}
+
+.el-button {
+  width: 100px;
 }
 </style>
 
