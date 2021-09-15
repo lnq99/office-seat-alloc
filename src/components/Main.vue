@@ -15,9 +15,9 @@
           <el-form-item>
             <el-button type="primary" plain round @click="run">Run</el-button>
           </el-form-item>
-          <el-form-item>
+          <!-- <el-form-item>
             <el-button type="danger" plain round>Clear</el-button>
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item>
             <el-button type="success" plain round>Export</el-button>
           </el-form-item>
@@ -29,6 +29,7 @@
         <div id="main">
           <canvas id="cv"></canvas>
           <svg id="svg"></svg>
+          <div id="draw"></div>
         </div>
         <br />
       </el-card>
@@ -38,6 +39,8 @@
 
 <script>
 import * as d3 from 'd3'
+import seatAlloc from './algo'
+import draw from './draw'
 
 export default {
   data() {
@@ -58,14 +61,14 @@ export default {
   methods: {
     run() {
       const seatSizeRect = document.querySelector('.seat-size-input')
-      const polygons = document.querySelectorAll('polygon')
       const w = seatSizeRect.getAttribute('width')
       const h = seatSizeRect.getAttribute('height')
-      console.log(w, h)
-      console.log(polygons)
-      for (let polygon of polygons)
-        for (let p of polygon.points)
-          console.log(p)
+
+      let polygons = document.querySelectorAll('polygon')
+      polygons = Array.from(polygons).map(polygon => polygon.points)
+
+      let res = seatAlloc(w, h, polygons)
+      draw(this.canvas.width, this.canvas.height, res)
     },
     handleImage(e) {
       const reader = new FileReader()
@@ -79,7 +82,7 @@ export default {
           this.svg.setAttribute('height', img.height)
 
           const main = document.getElementById('main')
-          main.setAttribute('style', `width: ${img.width}px; height: ${img.height}px`)
+          main.setAttribute('style', `width: ${img.width + 4}px; height: ${img.height + 4}px`)
         }
         img.src = event.target.result
       }
@@ -123,7 +126,7 @@ export default {
             .attr('cx', points[i][0])
             .attr('cy', points[i][1])
             .attr('r', 4)
-            .attr('fill', 'yellow')
+            .attr('fill', '#666')
             .attr('stroke', '#000')
             .attr('is-handle', 'true')
             .style({ cursor: 'pointer' })
@@ -158,7 +161,7 @@ export default {
             .attr('cx', points[i][0])
             .attr('cy', points[i][1])
             .attr('r', 4)
-            .attr('fill', '#f6f900')
+            .attr('fill', '#666')
             .attr('stroke', '#000')
             .attr('is-handle', 'true')
             .style('cursor', 'move')
@@ -296,6 +299,15 @@ export default {
 
 #svg-seat {
   outline: #666 2px solid;
+}
+
+#draw {
+  /* outline: #666 2px solid; */
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
 }
 </style>
 
