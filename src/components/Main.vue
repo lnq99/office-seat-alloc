@@ -67,26 +67,49 @@
             </el-row>
           </el-form-item>
           <el-form-item label="Workspace">
-            <el-row>
-              <el-col :span="18">
-                <el-input-number
-                  v-model="sizeOnPlan"
-                  :min="0"
-                  :precision="2"
-                  :step="0.1"
-                ></el-input-number>
-              </el-col>
-              <el-col :span="4" :offset="2">
-                <el-button
-                  type="info"
-                  icon="el-icon-location"
-                  circle
-                  style="width: 100%"
-                  :plain="!control.isCreatingZone"
-                  @click="control.isCreatingZone = !control.isCreatingZone"
-                ></el-button>
-              </el-col>
-            </el-row>
+            <el-button
+              type="info"
+              icon="el-icon-location"
+              style="width: 40px; margin-top: -40px"
+              circle
+              :plain="!control.isCreatingZone"
+              @click="control.isCreatingZone = !control.isCreatingZone"
+            ></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              style="width: 40px; margin-top: -40px"
+              circle
+              plain
+              @click="deleteCurrentZone"
+            ></el-button>
+            <el-table
+              :data="tableData"
+              height="240"
+              style="width: 100%"
+              highlight-current-row
+              @current-change="handleCurrentChange"
+            >
+              <el-table-column align="center" prop="id" label="ID" width="34" />
+              <el-table-column
+                align="center"
+                prop="width"
+                label="Width"
+                width="60"
+              />
+              <el-table-column
+                align="center"
+                prop="height"
+                label="Height"
+                width="64"
+              />
+              <el-table-column
+                align="center"
+                prop="rotation"
+                label="Rotation"
+                width="76"
+              />
+            </el-table>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" plain round @click="run">Run</el-button>
@@ -129,7 +152,20 @@ export default {
       isEditAspectRatio: false,
       control: {
         isCreatingZone: true
-      }
+      },
+      tableData: [
+        {
+          id: 1,
+          width: 200, height: 100,
+          rotation: 10
+        },
+        {
+          id: 2,
+          width: 200, height: 100,
+          rotation: 10
+        },
+      ],
+      currentRow: -1,
     }
   },
   mounted() {
@@ -187,6 +223,12 @@ export default {
     editAspectRatio() {
       this.isEditAspectRatio = !this.isEditAspectRatio
       console.log(this.isEditAspectRatio)
+    },
+    handleCurrentChange(val) {
+      this.currentRow = val
+    },
+    deleteCurrentZone() {
+      console.log('del', this.currentRow)
     }
   }
 }
@@ -200,6 +242,7 @@ export default {
 
 .card {
   height: calc(100% - 2px);
+  overflow-y: auto;
 }
 
 #main {
@@ -269,6 +312,11 @@ label {
 
 .el-main.board {
   padding-left: 0;
+}
+
+.cell {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 </style>
 

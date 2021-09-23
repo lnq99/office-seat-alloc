@@ -24,4 +24,18 @@ export default {
 body {
   margin: 0;
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin: 10px 0;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #bbb;
+}
 </style>

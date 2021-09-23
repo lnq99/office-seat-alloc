@@ -1,107 +1,34 @@
 import Konva from 'konva'
+import Zone from './zone'
+import Selection from './selection'
 
-class Zone extends Konva.Rect {
-  getInfo() {
-    const size = this.getSize()
-    const scale = this.getAbsoluteScale()
-    const position = this.getAbsolutePosition()
-    const rotation = this.getAbsoluteRotation()
-
-    return {
-      width: size.width * scale.x,
-      height: size.height * scale.y,
-      pos: { x: position.x, y: position.y },
-      rotation: rotation
-    }
-  }
-}
+// debugger // eslint-disable-line no-debugger
 
 class KonvaCanvas {
   constructor(id, width, height, control) {
     this.stage = new Konva.Stage({ container: id, width, height })
-    let layer = new Konva.Layer({ draggable: false })
-    this.stage.add(layer)
+    const stage = this.stage
 
-    let stage = this.stage
+    const layer = new Konva.Layer({ draggable: false })
+    stage.add(layer)
 
-    // draw a background rect to catch events.
-    // let bg = new Konva.Rect({
-    //   x: 0,
-    //   y: 0,
-    //   width,
-    //   height,
-    //   fill: '#4441'
-    // })
-    // layer.add(bg)
+    const selection = new Selection()
+    layer.add(selection)
 
-    // draw a rectangle to be used as the rubber area
-    let r2 = new Konva.Rect({
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0,
-      stroke: '#d0312d',
-      dash: [2, 2]
+    const tr = new Konva.Transformer({
+      boundBoxFunc: (oldBox, newBox) => newBox
     })
-    r2.listening(false) // stop r2 catching our mouse events.
-    layer.add(r2)
-
-    let tr = new Konva.Transformer({
-      boundBoxFunc: function (oldBox, newBox) {
-        return newBox
-      }
-    })
-
     layer.add(tr)
 
-    this.stage.batchDraw() // First draw of canvas.
+    stage.batchDraw()
 
-    let posStart
-    let posNow
     let mode = ''
-    function startDrag(posIn) {
-      posStart = { x: posIn.x, y: posIn.y }
-      posNow = { x: posIn.x, y: posIn.y }
-    }
-
-    function updateDrag(posIn) {
-      // update rubber rect position
-      posNow = { x: posIn.x, y: posIn.y }
-      let posRect = reverse(posStart, posNow)
-      r2.x(posRect.x1)
-      r2.y(posRect.y1)
-      r2.width(posRect.x2 - posRect.x1)
-      r2.height(posRect.y2 - posRect.y1)
-      r2.visible(true)
-
-      stage.batchDraw() // redraw any changes.
-    }
-
-    // reverse co-ords if user drags left / up
-    function reverse(r1, r2) {
-      let r1x = r1.x,
-        r1y = r1.y,
-        r2x = r2.x,
-        r2y = r2.y,
-        d
-      if (r1x > r2x) {
-        d = Math.abs(r1x - r2x)
-        r1x = r2x
-        r2x = r1x + d
-      }
-      if (r1y > r2y) {
-        d = Math.abs(r1y - r2y)
-        r1y = r2y
-        r2y = r1y + d
-      }
-      return { x1: r1x, y1: r1y, x2: r2x, y2: r2y } // return the corrected rect.
-    }
 
     // start the rubber drawing on mouse down.
     stage.on('mousedown', function (e) {
       if (control.isCreatingZone) {
         mode = 'drawing'
-        startDrag({ x: e.evt.layerX, y: e.evt.layerY })
+        selection.startDrag({ x: e.evt.layerX, y: e.evt.layerY })
       }
     })
 
@@ -109,7 +36,8 @@ class KonvaCanvas {
     stage.on('mousemove', function (e) {
       if (control.isCreatingZone) {
         if (mode === 'drawing') {
-          updateDrag({ x: e.evt.layerX, y: e.evt.layerY })
+          selection.updateDrag({ x: e.evt.layerX, y: e.evt.layerY })
+          stage.batchDraw()
         }
       }
     })
@@ -119,26 +47,17 @@ class KonvaCanvas {
       if (control.isCreatingZone) {
         control.isCreatingZone = false
         mode = ''
-        r2.visible(false)
-        // console.log(r2)
-        // debugger // eslint-disable-line no-debugger
+        selection.visible(false)
+
         let newRect = new Zone({
-          name: 'zone',
-          x: r2.x(),
-          y: r2.y(),
-          width: r2.width(),
-          height: r2.height(),
-          fill: '#87ceeb80',
-          // stroke: 'black',
-          draggable: true
-          // listening: false
+          x: selection.x(),
+          y: selection.y(),
+          width: selection.width(),
+          height: selection.height()
         })
-        console.log(newRect)
 
         layer.add(newRect)
         tr.nodes([newRect])
-
-        // console.log(layer)
         stage.batchDraw()
       }
     })
