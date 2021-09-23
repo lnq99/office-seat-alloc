@@ -4,13 +4,89 @@
       <el-card class="aside card">
         <el-form label-position="top">
           <el-form-item label="Floor plan">
-            <input type="file" id="imageLoader" accept=".png, .jpg, .jpeg" />
+            <input
+              type="file"
+              id="imageLoader"
+              accept=".png, .jpg, .jpeg"
+              :disabled="isFileLoaded"
+            />
           </el-form-item>
-          <el-form-item label="Number of seats">
+          <!-- <el-form-item label="Number of seats">
             <el-input-number v-model="numSeat" :min="1"></el-input-number>
+          </el-form-item> -->
+          <el-form-item label="Metric of plan (aspect ratio)">
+            <el-row>
+              <el-col :span="18">
+                <el-input-number
+                  v-model="sizeOnPlan"
+                  :min="0"
+                  :precision="2"
+                  :step="0.1"
+                ></el-input-number>
+              </el-col>
+              <el-col :span="4" :offset="2">
+                <el-button
+                  type="info"
+                  icon="el-icon-edit"
+                  circle
+                  style="width: 100%"
+                  :plain="!isEditAspectRatio"
+                  @click="editAspectRatio"
+                ></el-button>
+              </el-col>
+            </el-row>
           </el-form-item>
-          <el-form-item label="Seat's size">
-            <svg id="svg-seat" width="100%"></svg>
+          <el-form-item label="Seat's size (width x height)">
+            <!-- <svg id="svg-seat" width="100%"></svg> -->
+            <el-row>
+              <el-col :span="10">
+                <el-input-number
+                  v-model="seatWidth"
+                  :precision="2"
+                  :step="0.1"
+                  :min="0"
+                  :max="10"
+                  :controls="false"
+                  style="width: 100%"
+                />
+              </el-col>
+              <el-col :span="4" style="width: 100%; text-align: center"
+                >x</el-col
+              >
+              <el-col :span="10">
+                <el-input-number
+                  v-model="seatHeight"
+                  :precision="2"
+                  :step="0.1"
+                  :min="0"
+                  :max="10"
+                  :controls="false"
+                  style="width: 100%"
+                />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="Workspace">
+            <el-row>
+              <el-col :span="18">
+                <el-input-number
+                  v-model="sizeOnPlan"
+                  :min="0"
+                  :precision="2"
+                  :step="0.1"
+                ></el-input-number>
+              </el-col>
+              <el-col :span="4" :offset="2">
+                <el-button
+                  type="info"
+                  icon="el-icon-location"
+                  circle
+                  style="width: 100%"
+                  :plain="!control.isCreatingZone"
+                  @click="control.isCreatingZone = !control.isCreatingZone"
+                ></el-button>
+              </el-col>
+            </el-row>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" plain round @click="run">Run</el-button>
@@ -28,8 +104,9 @@
       <el-card class="card" style="overflow: auto">
         <div id="main">
           <canvas id="cv"></canvas>
-          <svg id="svg"></svg>
-          <div id="draw"></div>
+          <!-- <svg id="svg"></svg>
+          <div id="result"></div> -->
+          <div id="konva"></div>
         </div>
         <br />
       </el-card>
@@ -38,14 +115,21 @@
 </template>
 
 <script>
-import * as d3 from 'd3'
 import seatAlloc from './algo'
-import draw from './draw'
+import KonvaCanvas from './konva'
 
 export default {
   data() {
     return {
-      numSeat: 10
+      isFileLoaded: false,
+      numSeat: 10,
+      seatWidth: 1,
+      seatHeight: 1,
+      sizeOnPlan: 1,
+      isEditAspectRatio: false,
+      control: {
+        isCreatingZone: true
+      }
     }
   },
   mounted() {
@@ -53,22 +137,25 @@ export default {
     this.imageLoader.addEventListener('change', this.handleImage, false)
     this.canvas = document.getElementById('cv')
     this.ctx = this.canvas.getContext('2d')
-    this.svg = document.getElementById('svg')
+    this.svg = document.getElementById('konva')
 
     this.init()
-    this.initSvgSeat()
+    this.run()
   },
   methods: {
     run() {
-      const seatSizeRect = document.querySelector('.seat-size-input')
-      const w = seatSizeRect.getAttribute('width')
-      const h = seatSizeRect.getAttribute('height')
+      // const seatSizeRect = document.querySelector('.seat-size-input')
+      // const w = parseInt(seatSizeRect.getAttribute('width'))
+      // const h = parseInt(seatSizeRect.getAttribute('height'))
 
       let polygons = document.querySelectorAll('polygon')
-      polygons = Array.from(polygons).map(polygon => polygon.points)
+      if (polygons)
+        polygons = Array.from(polygons).map(polygon => polygon.points)
 
-      let res = seatAlloc(w, h, polygons)
-      draw(this.canvas.width, this.canvas.height, res)
+      // let res = seatAlloc(this.numSeat, w, h, polygons)
+      // draw(this.resultCanvas, w, h, res)
+
+      new KonvaCanvas('konva', this.canvas.width, this.canvas.height, this.control)
     },
     handleImage(e) {
       const reader = new FileReader()
@@ -89,172 +176,17 @@ export default {
       reader.readAsDataURL(e.target.files[0])
     },
     init() {
-      const svg = d3.select('#svg')
+      const points = [[82, 60],
+      [254, 61],
+      [255, 148],
+      [196, 147],
+      [157, 184],
+      [81, 185]]
 
-      let dragging = false
-      let drawing = false
-      let startPoint
-      const points = []
-      let g
-      const dragger = d3
-        .drag()
-        .on('drag', handleDrag)
-        .on('end', function (d) {
-          dragging = false
-        })
-
-      svg.on('mouseup', function (event, d) {
-        if (dragging) return
-        drawing = true
-        startPoint = d3.pointer(event)
-        if (svg.select('g.drawPoly').empty())
-          g = svg.append('g').attr('class', 'drawPoly')
-        if (event.target.hasAttribute('is-handle')) {
-          closePolygon()
-          return
-        }
-
-        points.push(d3.pointer(event))
-        g.select('polyline').remove()
-        let polyline = g
-          .append('polyline')
-          .attr('points', points)
-          .style('fill', 'none')
-          .attr('stroke', '#000')
-        for (let i = 0; i < points.length; i++) {
-          g.append('circle')
-            .attr('cx', points[i][0])
-            .attr('cy', points[i][1])
-            .attr('r', 4)
-            .attr('fill', '#666')
-            .attr('stroke', '#000')
-            .attr('is-handle', 'true')
-            .style({ cursor: 'pointer' })
-        }
-      })
-
-      svg.on('mousemove', function (event) {
-        if (!drawing) return
-        const g = d3.select('g.drawPoly')
-        g.select('line').remove()
-        let line = g
-          .append('line')
-          .attr('x1', startPoint[0])
-          .attr('y1', startPoint[1])
-          .attr('x2', d3.pointer(event)[0] + 2)
-          .attr('y2', d3.pointer(event)[1])
-          .attr('stroke', '#53dbf3')
-          .attr('stroke-width', 1)
-      })
-
-      function closePolygon() {
-        svg.select('g.drawPoly').remove()
-        const g = svg.append('g')
-        g.append('polygon').attr('points', points).style('fill', '#87ceeb60')
-
-        for (let i = 0; i < points.length; i++) {
-          let circle = g
-            .selectAll('circles')
-            .data([points[i]])
-            .enter()
-            .append('circle')
-            .attr('cx', points[i][0])
-            .attr('cy', points[i][1])
-            .attr('r', 4)
-            .attr('fill', '#666')
-            .attr('stroke', '#000')
-            .attr('is-handle', 'true')
-            .style('cursor', 'move')
-            .call(dragger)
-        }
-        points.splice(0)
-        drawing = false
-      }
-
-      function handleDrag(event) {
-        if (drawing) return
-        dragging = true
-
-        const dragCircle = d3.select(this)
-        dragCircle.attr('cx', event.x).attr('cy', event.y)
-
-        const newPoints = []
-        const poly = d3.select(this.parentNode).select('polygon')
-        const circles = d3.select(this.parentNode).selectAll('circle')
-
-        circles.each(function (d, i) {
-          let circle = d3.select(this)
-          newPoints.push([circle.attr('cx'), circle.attr('cy')])
-        })
-
-        poly.attr('points', newPoints)
-      }
     },
-    initSvgSeat() {
-      const svg = d3.select('#svg-seat')
-      new Rectangle()
-
-      function Rectangle() {
-        const self = this
-        const rectData = [{ x: 80, y: 50 }, { x: 100, y: 70 }]
-        let rect, isDown = false, isDrag = false
-
-        function updateRect() {
-          rect = self.rectangleElement
-          rect.attr('x', rectData[1].x - rectData[0].x > 0 ? rectData[0].x : rectData[1].x)
-          rect.attr('y', rectData[1].y - rectData[0].y > 0 ? rectData[0].y : rectData[1].y)
-          rect.attr('width', Math.abs(rectData[1].x - rectData[0].x))
-          rect.attr('height', Math.abs(rectData[1].y - rectData[0].y))
-
-          const point1 = self.point1.data(rectData)
-          point1.attr('r', 4)
-            .attr('cx', rectData[0].x)
-            .attr('cy', rectData[0].y)
-          const point2 = self.point2.data(rectData)
-          point2.attr('r', 4)
-            .attr('cx', rectData[1].x)
-            .attr('cy', rectData[1].y)
-        }
-
-        function dragRect(e) {
-          for (let i = 0; i < rectData.length; i++) {
-            self.rectangleElement
-              .attr('x', rectData[i].x += e.dx)
-              .attr('y', rectData[i].y += e.dy)
-          }
-          rect.style('cursor', 'move')
-          updateRect()
-        }
-
-        function dragPoint1(e) {
-          self.point1.attr('cx', rectData[0].x += e.dx).attr('cy', rectData[0].y += e.dy)
-          updateRect()
-        }
-
-        function dragPoint2(e) {
-          self.point2.attr('cx', rectData[1].x += e.dx).attr('cy', rectData[1].y += e.dy)
-          updateRect()
-        }
-
-        const dragR = d3.drag().on('drag', dragRect)
-        const dragC1 = d3.drag().on('drag', dragPoint1)
-        const dragC2 = d3.drag().on('drag', dragPoint2)
-
-        self.rectangleElement = svg.append('rect').attr('class', 'seat-size-input').call(dragR)
-        self.point1 = svg.append('circle').attr('class', 'pointC').call(dragC1)
-        self.point2 = svg.append('circle').attr('class', 'pointC').call(dragC2)
-
-        updateRect()
-
-        svg.on('mousedown', function (event) {
-          if (!isDown && !isDrag) {
-            isDrag = false
-          } else {
-            isDrag = true
-          }
-          isDown = !isDown
-        })
-      }
+    editAspectRatio() {
+      this.isEditAspectRatio = !this.isEditAspectRatio
+      console.log(this.isEditAspectRatio)
     }
   }
 }
@@ -297,6 +229,16 @@ export default {
   right: 0;
 }
 
+#konva {
+  /* outline: red 1px solid; */
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  margin-left: 4px;
+}
+
 #svg-seat {
   outline: #666 2px solid;
 }
@@ -323,6 +265,10 @@ label {
 
 .el-button {
   width: 100px;
+}
+
+.el-main.board {
+  padding-left: 0;
 }
 </style>
 
