@@ -1,9 +1,11 @@
 import Konva from 'konva'
 
-class Zone extends Konva.Rect {
+class Seat extends Konva.Rect {
   constructor(obj) {
-    obj.name = 'zone'
-    obj.fill = '#87ceeb80'
+    obj.name = 'seat'
+    obj.fill = '#8888'
+    obj.stroke = '#111d'
+    obj.strokeWidth = 1
     obj.draggable = true
     super(obj)
     this.on('transform', () => {
@@ -31,4 +33,4 @@ class Zone extends Konva.Rect {
   }
 }
 
-export default Zone
+export default Seat

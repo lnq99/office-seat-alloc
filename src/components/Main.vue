@@ -70,27 +70,32 @@
             <el-button
               type="info"
               icon="el-icon-location"
-              style="width: 40px; margin-top: -40px"
-              circle
+              round
               :plain="!control.isCreatingZone"
               @click="control.isCreatingZone = !control.isCreatingZone"
-            ></el-button>
+              >Create
+            </el-button>
             <el-button
               type="danger"
               icon="el-icon-delete"
-              style="width: 40px; margin-top: -40px"
+              style="width: 40px"
               circle
               plain
               @click="deleteCurrentZone"
             ></el-button>
             <el-table
-              :data="tableData"
+              :data="zones"
               height="240"
               style="width: 100%"
               highlight-current-row
               @current-change="handleCurrentChange"
             >
-              <el-table-column align="center" prop="id" label="ID" width="34" />
+              <el-table-column
+                align="center"
+                type="index"
+                label="ID"
+                width="34"
+              />
               <el-table-column
                 align="center"
                 prop="width"
@@ -111,6 +116,7 @@
               />
             </el-table>
           </el-form-item>
+          <br />
           <el-form-item>
             <el-button type="primary" plain round @click="run">Run</el-button>
           </el-form-item>
@@ -131,7 +137,7 @@
           <div id="result"></div> -->
           <div id="konva"></div>
         </div>
-        <br />
+        <!-- <br /> -->
       </el-card>
     </el-main>
   </el-container>
@@ -146,12 +152,13 @@ export default {
     return {
       isFileLoaded: false,
       numSeat: 10,
-      seatWidth: 1,
-      seatHeight: 1,
+      seatWidth: 15,
+      seatHeight: 10,
       sizeOnPlan: 1,
       isEditAspectRatio: false,
       control: {
-        isCreatingZone: true
+        isCreatingZone: false,
+        showMetric: false,
       },
       tableData: [
         {
@@ -166,6 +173,13 @@ export default {
         },
       ],
       currentRow: -1,
+      konva: null,
+      zones: []
+    }
+  },
+  watch: {
+    'control.isCreatingZone'() {
+      this.fetchZones()
     }
   },
   mounted() {
@@ -176,22 +190,25 @@ export default {
     this.svg = document.getElementById('konva')
 
     this.init()
-    this.run()
+    // this.konva = new KonvaCanvas('konva', this.canvas.width, this.canvas.height, this.control)
+    // this.konva.addSeats()
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code == 'Delete')
+        this.deleteCurrentZone()
+    })
   },
   methods: {
     run() {
-      // const seatSizeRect = document.querySelector('.seat-size-input')
-      // const w = parseInt(seatSizeRect.getAttribute('width'))
-      // const h = parseInt(seatSizeRect.getAttribute('height'))
+      // let polygons = document.querySelectorAll('polygon')
+      // if (polygons)
+      //   polygons = Array.from(polygons).map(polygon => polygon.points)
 
-      let polygons = document.querySelectorAll('polygon')
-      if (polygons)
-        polygons = Array.from(polygons).map(polygon => polygon.points)
-
-      // let res = seatAlloc(this.numSeat, w, h, polygons)
+      // let res = seatAlloc(this.numSeat, this.seatWidth, this.seatHeight, this.zones)
       // draw(this.resultCanvas, w, h, res)
 
-      new KonvaCanvas('konva', this.canvas.width, this.canvas.height, this.control)
+      console.log(this.konva.getZones())
+      this.konva.addSeats()
     },
     handleImage(e) {
       const reader = new FileReader()
@@ -206,6 +223,8 @@ export default {
 
           const main = document.getElementById('main')
           main.setAttribute('style', `width: ${img.width + 4}px; height: ${img.height + 4}px`)
+          this.konva = new KonvaCanvas('konva', img.width, img.height, this.control)
+          this.isFileLoaded = true
         }
         img.src = event.target.result
       }
@@ -222,13 +241,18 @@ export default {
     },
     editAspectRatio() {
       this.isEditAspectRatio = !this.isEditAspectRatio
-      console.log(this.isEditAspectRatio)
+      this.konva.toggleMetricLine()
     },
     handleCurrentChange(val) {
       this.currentRow = val
     },
     deleteCurrentZone() {
       console.log('del', this.currentRow)
+      this.konva.removeSelected()
+      this.fetchZones()
+    },
+    fetchZones() {
+      this.zones = this.konva.getZones()
     }
   }
 }
@@ -308,6 +332,7 @@ label {
 
 .el-button {
   width: 100px;
+  padding: 0 !important;
 }
 
 .el-main.board {
