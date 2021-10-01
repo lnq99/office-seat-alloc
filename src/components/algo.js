@@ -1,66 +1,119 @@
-export default function seatAlloc(zones, seatWidth, seatHeight) {
-  console.log(zones, seatWidth, seatHeight)
+export default function seatAlloc(zones, seatWidth, seatHeight, gap) {
+  console.log(zones[0], seatWidth, seatHeight)
   let res = []
   for (let z of zones) {
-    seatAllocOneRect(z, seatWidth, seatHeight).forEach((point) => {
-      res.push([
-        z.x + point[0],
-        z.y + point[1],
-        seatWidth,
-        seatHeight,
-        z.rotation
-      ])
+    let [w, h] = z.isWidthMajor
+      ? [seatWidth, seatHeight]
+      : [seatHeight, seatWidth]
+    seatAllocOneRect(z, seatWidth, seatHeight, gap).forEach((point) => {
+      res.push([z.x + point[0], z.y + point[1], w, h, z.rotation, z.id])
     })
   }
   return res
 }
 
-function seatAllocOneRect(rect, seatWidth, seatHeight) {
+function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
   let { width, height, rotation } = rect
-  let gap = 10
 
   let wArr, hArr
+  let wGap, hGap
+  let n, m, nGap
+  let lenLeft
 
-  // if (Math.random() > 0.5) {
-  let lenLeft = width - gap
-  let n = Math.floor(lenLeft / seatWidth)
-  lenLeft = width - n * seatWidth
-  let nGap = Math.floor(lenLeft / gap)
+  console.log(rect)
 
-  nGap = 1
+  if (rect.isWidthMajor) {
+    lenLeft = width - gap
+    n = Math.floor(lenLeft / seatWidth)
+    lenLeft = width - n * seatWidth
+    nGap = Math.min(Math.floor(lenLeft / gap), n - 1)
+    wGap = lenLeft / nGap
 
-  let wGap = lenLeft / nGap
+    let seatWidthIfGapEqualy = (n * seatWidth) / (nGap + 1)
+    wArr = new Array(n + nGap)
 
-  wArr = new Array(n + nGap)
-  wArr[Math.floor((n + nGap) / 2)] = wGap
+    // console.log(seatWidthIfGapEqualy)
 
-  let m = Math.floor(height / (2 * seatHeight + gap)) * 2
-  nGap = m / 2
+    for (let i = 1; i <= nGap; i++) {
+      wArr[Math.round((i * seatWidthIfGapEqualy) / seatWidth) + i - 1] = wGap
+    }
 
-  lenLeft = height - m * seatHeight - nGap * gap
-  if (lenLeft > gap + seatHeight) {
-    lenLeft -= seatHeight
-    m++
-    nGap++
+    // wArr[Math.floor((n + nGap) / 2)] = wGap
+
+    m = Math.floor(height / (2 * seatHeight + gap)) * 2
+    nGap = m / 2
+
+    lenLeft = height - m * seatHeight - nGap * gap
+    if (lenLeft > gap + seatHeight) {
+      lenLeft -= seatHeight
+      m++
+      nGap++
+    }
+
+    lenLeft = height - m * seatHeight
+    hGap = lenLeft / nGap
+
+    hArr = new Array(m + nGap)
+    for (let i = 1; i < m + nGap; i += 3) {
+      hArr[i] = hGap
+    }
+  } else {
+    lenLeft = height - gap
+    m = Math.floor(lenLeft / seatWidth)
+    lenLeft = height - m * seatWidth
+    nGap = Math.min(Math.floor(lenLeft / gap), m - 1)
+    hGap = lenLeft / nGap
+
+    let seatWidthIfGapEqualy = (m * seatWidth) / (nGap + 1)
+    hArr = new Array(m + nGap)
+
+    // console.log(seatWidthIfGapEqualy)
+
+    for (let i = 1; i <= nGap; i++) {
+      hArr[Math.round((i * seatWidthIfGapEqualy) / seatWidth) + i - 1] = hGap
+    }
+
+    // wArr[Math.floor((n + nGap) / 2)] = wGap
+
+    n = Math.floor(width / (2 * seatHeight + gap)) * 2
+    nGap = n / 2
+
+    lenLeft = width - n * seatHeight - nGap * gap
+    if (lenLeft > gap + seatHeight) {
+      lenLeft -= seatHeight
+      n++
+      nGap++
+    }
+
+    lenLeft = width - n * seatHeight
+    wGap = lenLeft / nGap
+
+    wArr = new Array(n + nGap)
+    for (let i = 1; i < n + nGap; i += 3) {
+      wArr[i] = wGap
+    }
   }
-
-  lenLeft = height - m * seatHeight
-  let hGap = lenLeft / nGap
-
-  hArr = new Array(m + nGap)
-  for (let i = 1; i < m + nGap; i += 3) {
-    hArr[i] = hGap
-  }
-
-  // } else {
-  //   let lenLeft = height - gap
-  //   console.log(lenLeft / seatWidth)
-  // }
 
   console.log(hArr)
   console.log(wArr)
 
-  let [vw, vh, v] = vecStride(seatWidth, seatHeight, rotation)
+  let vw, vh, v
+  if (rect.isWidthMajor) {
+    ;[vw, vh, v] = vecStride(seatWidth, seatHeight, rotation)
+  } else {
+    ;[vw, vh, v] = vecStride(seatHeight, seatWidth, rotation)
+  }
+
+  // if (!rect.isWidthMajor) {
+  //   let tmp
+  //   tmp = wGap
+  //   wGap = hGap
+  //   hGap = tmp
+
+  //   tmp = vw
+  //   vw = vh
+  //   vh = tmp
+  // }
 
   let gw = [v[0] * wGap, -v[1] * wGap]
   let gh = [v[1] * hGap, v[0] * hGap]

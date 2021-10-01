@@ -6,6 +6,9 @@ class Zone extends Konva.Rect {
     obj.fill = '#87ceeb80'
     obj.draggable = true
     super(obj)
+
+    this.isWidthMajor = true
+
     this.on('transform', () => {
       this.setAttrs({
         width: this.width() * this.scaleX(),
@@ -26,7 +29,9 @@ class Zone extends Konva.Rect {
       y: position.y,
       width: size.width,
       height: size.height,
-      rotation: rotation
+      rotation: rotation,
+      isWidthMajor: this.isWidthMajor,
+      id: this._id
     }
   }
 }

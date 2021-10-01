@@ -2,6 +2,7 @@ import Konva from 'konva'
 import Zone from './zone'
 import Seat from './seat'
 import Selection from './selection'
+import seatAlloc from './algo'
 
 // debugger // eslint-disable-line no-debugger
 
@@ -10,7 +11,7 @@ const tr = new Konva.Transformer({
 })
 
 class KonvaCanvas {
-  constructor(id, width, height, control) {
+  constructor(id, width, height, control, img) {
     this.stage = new Konva.Stage({ container: id, width, height })
     const stage = this.stage
 
@@ -18,14 +19,19 @@ class KonvaCanvas {
     const layer = this.layer
     stage.add(layer)
 
+    const bg = this.setBackground(img)
+
     this.resultLayer = new Konva.Layer({ draggable: false })
     const resultLayer = this.resultLayer
     stage.add(resultLayer)
 
     const selection = new Selection()
     layer.add(selection)
-    layer.add(tr)
-    resultLayer.add(tr)
+
+    const topLayer = new Konva.Layer({ draggable: false })
+    stage.add(topLayer)
+    // layer.add(tr)
+    topLayer.add(tr)
 
     this._addMetricLine(layer)
 
@@ -57,7 +63,7 @@ class KonvaCanvas {
         mode = ''
         selection.visible(false)
 
-        if (selection.width() + selection.height() > 5) {
+        if (selection.width() + selection.height() > 20) {
           control.isCreatingZone = false
 
           let newRect = new Zone({
@@ -66,8 +72,6 @@ class KonvaCanvas {
             width: selection.width(),
             height: selection.height()
           })
-
-          console.log(newRect)
 
           layer.add(newRect)
           tr.nodes([newRect])
@@ -78,9 +82,9 @@ class KonvaCanvas {
 
     // clicks should select/deselect shapes
     stage.on('click', function (e) {
-      console.log(e.target)
+      // console.log(e.target)
       // if click on empty area - remove all selections
-      if (e.target === stage) {
+      if (e.target === bg) {
         tr.nodes([])
         return
       }
@@ -94,11 +98,12 @@ class KonvaCanvas {
       const metaPressed = e.evt.shiftKey || e.evt.ctrlKey
       const isSelected = tr.nodes().indexOf(e.target) >= 0
 
-      if (!metaPressed && !isSelected) {
+      if ((!metaPressed && !isSelected) || e.target.hasName('zone')) {
         // if no key pressed and the node is not selected
         // select just one
         tr.nodes([e.target])
-        console.log(e.target.getInfo())
+        // trigger selected zone change watcher
+        control.isSelectedZoneChanged = !control.isSelectedZoneChanged
       } else if (metaPressed && isSelected) {
         // if we pressed keys and node was selected
         // we need to remove it from selection:
@@ -114,27 +119,45 @@ class KonvaCanvas {
     })
   }
 
-  addSeats(seats) {
-    // let seats = [
-    //   [20, 20, 30, 20, 0],
-    //   [50, 20, 30, 20, 0],
-    //   [0, 0, 30, 20, 0]
-    // ]
+  selectZone(zoneId) {
+    let z = this.layer.children.filter(
+      (e) => e instanceof Zone && e._id == zoneId
+    )[0]
+    tr.nodes([z])
+  }
 
+  getSelectedZone() {
+    // console.log(tr.nodes().filter((e) => e instanceof Zone))
+    return tr.nodes().filter((e) => e instanceof Zone)[0]._id
+  }
+
+  addSeats(seats) {
     seats.forEach((e) => {
       let newRect = new Seat({
         x: e[0],
         y: e[1],
         width: e[2],
         height: e[3],
-        rotation: e[4]
+        rotation: e[4],
+        groupId: e[5]
       })
       this.resultLayer.add(newRect)
     })
   }
 
   removeSelected() {
-    tr.nodes().forEach((e) => e.destroy())
+    tr.nodes().forEach((e) => {
+      if (e.name() == 'zone') {
+        this.removeSeatsOfZone(e._id)
+      }
+      e.destroy()
+    })
+  }
+
+  removeSeatsOfZone(zoneId) {
+    this.resultLayer.children
+      .filter((e) => e.getAttr('groupId') == zoneId)
+      .forEach((e) => e.destroy())
   }
 
   getZones() {
@@ -201,6 +224,49 @@ class KonvaCanvas {
     )
 
     return Math.sqrt((p1.x() - p2.x()) ** 2 + (p1.y() - p2.y()) ** 2)
+  }
+
+  setBackground(img) {
+    const bg = new Konva.Image({
+      image: img,
+      x: 0,
+      y: 0,
+      width: img.width,
+      height: img.height,
+      draggable: false
+    })
+
+    this.layer.add(bg)
+    this.layer.draw()
+
+    return bg
+  }
+
+  toggleZones() {
+    this.layer.children
+      .filter((e) => e instanceof Zone)
+      .forEach((e) => e.visible(!e.visible()))
+
+    tr.nodes([])
+  }
+
+  changeMainDirection(zoneId, seatWidth, seatHeight, gap) {
+    this.removeSeatsOfZone(zoneId)
+
+    // let z = this.getZones().filter((e) => e.id == zoneId)[0]
+    // z.isWidthMajor = !z.isWidthMajor
+
+    let z
+
+    for (let e of this.layer.children) {
+      if (e._id == zoneId) {
+        e.isWidthMajor = !e.isWidthMajor
+        z = e.getInfo()
+        break
+      }
+    }
+
+    this.addSeats(seatAlloc([z], seatWidth, seatHeight, gap))
   }
 }
 
