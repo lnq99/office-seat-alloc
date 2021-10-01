@@ -114,13 +114,14 @@ class KonvaCanvas {
     })
   }
 
-  addSeats() {
-    let res = [
-      [20, 20, 30, 20, 0],
-      [50, 20, 30, 20, 0]
-    ]
+  addSeats(seats) {
+    // let seats = [
+    //   [20, 20, 30, 20, 0],
+    //   [50, 20, 30, 20, 0],
+    //   [0, 0, 30, 20, 0]
+    // ]
 
-    res.forEach((e) => {
+    seats.forEach((e) => {
       let newRect = new Seat({
         x: e[0],
         y: e[1],
@@ -192,6 +193,14 @@ class KonvaCanvas {
     this.layer.children
       .filter((e) => e.name() == 'metric')
       .forEach((e) => e.visible(!e.visible()))
+  }
+
+  getMetricPixel() {
+    let [p1, p2] = this.layer.children.filter(
+      (e) => e.name() == 'metric' && e instanceof Konva.Circle
+    )
+
+    return Math.sqrt((p1.x() - p2.x()) ** 2 + (p1.y() - p2.y()) ** 2)
   }
 }
 

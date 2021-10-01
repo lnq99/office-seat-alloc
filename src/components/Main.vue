@@ -101,18 +101,21 @@
                 prop="width"
                 label="Width"
                 width="60"
+                :formatter="sizeFormatter"
               />
               <el-table-column
                 align="center"
                 prop="height"
                 label="Height"
                 width="64"
+                :formatter="sizeFormatter"
               />
               <el-table-column
                 align="center"
                 prop="rotation"
                 label="Rotation"
                 width="76"
+                :formatter="sizeFormatter"
               />
             </el-table>
           </el-form-item>
@@ -152,29 +155,18 @@ export default {
     return {
       isFileLoaded: false,
       numSeat: 10,
-      seatWidth: 15,
-      seatHeight: 10,
-      sizeOnPlan: 1,
+      seatWidth: 2,
+      seatHeight: 1.5,
+      sizeOnPlan: 8,
       isEditAspectRatio: false,
       control: {
         isCreatingZone: false,
         showMetric: false,
       },
-      tableData: [
-        {
-          id: 1,
-          width: 200, height: 100,
-          rotation: 10
-        },
-        {
-          id: 2,
-          width: 200, height: 100,
-          rotation: 10
-        },
-      ],
       currentRow: -1,
       konva: null,
-      zones: []
+      zones: [],
+      ratio: 20,
     }
   },
   watch: {
@@ -189,7 +181,6 @@ export default {
     this.ctx = this.canvas.getContext('2d')
     this.svg = document.getElementById('konva')
 
-    this.init()
     // this.konva = new KonvaCanvas('konva', this.canvas.width, this.canvas.height, this.control)
     // this.konva.addSeats()
 
@@ -200,15 +191,9 @@ export default {
   },
   methods: {
     run() {
-      // let polygons = document.querySelectorAll('polygon')
-      // if (polygons)
-      //   polygons = Array.from(polygons).map(polygon => polygon.points)
+      let seats = seatAlloc(this.konva.getZones(), this.seatWidth * this.ratio, this.seatHeight * this.ratio)
 
-      // let res = seatAlloc(this.numSeat, this.seatWidth, this.seatHeight, this.zones)
-      // draw(this.resultCanvas, w, h, res)
-
-      console.log(this.konva.getZones())
-      this.konva.addSeats()
+      this.konva.addSeats(seats)
     },
     handleImage(e) {
       const reader = new FileReader()
@@ -225,23 +210,16 @@ export default {
           main.setAttribute('style', `width: ${img.width + 4}px; height: ${img.height + 4}px`)
           this.konva = new KonvaCanvas('konva', img.width, img.height, this.control)
           this.isFileLoaded = true
+          this.calcRatio()
         }
         img.src = event.target.result
       }
       reader.readAsDataURL(e.target.files[0])
     },
-    init() {
-      const points = [[82, 60],
-      [254, 61],
-      [255, 148],
-      [196, 147],
-      [157, 184],
-      [81, 185]]
-
-    },
     editAspectRatio() {
       this.isEditAspectRatio = !this.isEditAspectRatio
       this.konva.toggleMetricLine()
+      this.calcRatio()
     },
     handleCurrentChange(val) {
       this.currentRow = val
@@ -253,6 +231,12 @@ export default {
     },
     fetchZones() {
       this.zones = this.konva.getZones()
+    },
+    sizeFormatter(row, column, cellValue, index) {
+      return cellValue.toFixed(2)
+    },
+    calcRatio() {
+      this.ratio = this.konva.getMetricPixel() / this.sizeOnPlan
     }
   }
 }
