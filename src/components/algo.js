@@ -1,5 +1,4 @@
 export default function seatAlloc(zones, seatWidth, seatHeight, gap) {
-  console.log(zones[0], seatWidth, seatHeight)
   let res = []
   for (let z of zones) {
     let [w, h] = z.isWidthMajor
@@ -20,8 +19,6 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
   let n, m, nGap
   let lenLeft
 
-  console.log(rect)
-
   if (rect.isWidthMajor) {
     lenLeft = width - gap
     n = Math.floor(lenLeft / seatWidth)
@@ -32,13 +29,9 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     let seatWidthIfGapEqualy = (n * seatWidth) / (nGap + 1)
     wArr = new Array(n + nGap)
 
-    // console.log(seatWidthIfGapEqualy)
-
     for (let i = 1; i <= nGap; i++) {
       wArr[Math.round((i * seatWidthIfGapEqualy) / seatWidth) + i - 1] = wGap
     }
-
-    // wArr[Math.floor((n + nGap) / 2)] = wGap
 
     m = Math.floor(height / (2 * seatHeight + gap)) * 2
     nGap = m / 2
@@ -67,13 +60,9 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     let seatWidthIfGapEqualy = (m * seatWidth) / (nGap + 1)
     hArr = new Array(m + nGap)
 
-    // console.log(seatWidthIfGapEqualy)
-
     for (let i = 1; i <= nGap; i++) {
       hArr[Math.round((i * seatWidthIfGapEqualy) / seatWidth) + i - 1] = hGap
     }
-
-    // wArr[Math.floor((n + nGap) / 2)] = wGap
 
     n = Math.floor(width / (2 * seatHeight + gap)) * 2
     nGap = n / 2
@@ -94,9 +83,6 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     }
   }
 
-  console.log(hArr)
-  console.log(wArr)
-
   let vw, vh, v
   if (rect.isWidthMajor) {
     ;[vw, vh, v] = vecStride(seatWidth, seatHeight, rotation)
@@ -104,22 +90,8 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     ;[vw, vh, v] = vecStride(seatHeight, seatWidth, rotation)
   }
 
-  // if (!rect.isWidthMajor) {
-  //   let tmp
-  //   tmp = wGap
-  //   wGap = hGap
-  //   hGap = tmp
-
-  //   tmp = vw
-  //   vw = vh
-  //   vh = tmp
-  // }
-
   let gw = [v[0] * wGap, -v[1] * wGap]
   let gh = [v[1] * hGap, v[0] * hGap]
-
-  // console.log(vw, vh, gw, gh, v)
-  // console.log(wGap, hGap)
 
   let res = []
 

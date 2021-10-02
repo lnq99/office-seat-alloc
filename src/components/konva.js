@@ -82,7 +82,6 @@ class KonvaCanvas {
 
     // clicks should select/deselect shapes
     stage.on('click', function (e) {
-      // console.log(e.target)
       // if click on empty area - remove all selections
       if (e.target === bg) {
         tr.nodes([])
@@ -127,7 +126,6 @@ class KonvaCanvas {
   }
 
   getSelectedZone() {
-    // console.log(tr.nodes().filter((e) => e instanceof Zone))
     return tr.nodes().filter((e) => e instanceof Zone)[0]._id
   }
 
@@ -161,10 +159,6 @@ class KonvaCanvas {
   }
 
   getZones() {
-    // this.layer.children.forEach((e) => {
-    //   console.log(e instanceof Zone)
-    // })
-
     return this.layer.children
       .filter((e) => e instanceof Zone)
       .map((e) => e.getInfo())
@@ -253,11 +247,7 @@ class KonvaCanvas {
   changeMainDirection(zoneId, seatWidth, seatHeight, gap) {
     this.removeSeatsOfZone(zoneId)
 
-    // let z = this.getZones().filter((e) => e.id == zoneId)[0]
-    // z.isWidthMajor = !z.isWidthMajor
-
     let z
-
     for (let e of this.layer.children) {
       if (e._id == zoneId) {
         e.isWidthMajor = !e.isWidthMajor

@@ -1,11 +1,43 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 
-import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+
+import {
+  ElCard,
+  ElAside,
+  ElMain,
+  ElContainer,
+  ElTable,
+  ElTableColumn,
+  ElRow,
+  ElCol,
+  ElButton,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElInputNumber
+} from 'element-plus'
 
 const app = createApp(App)
 
-app.use(ElementPlus)
+const components = [
+  ElCard,
+  ElAside,
+  ElMain,
+  ElContainer,
+  ElTable,
+  ElTableColumn,
+  ElRow,
+  ElCol,
+  ElButton,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElInputNumber
+]
+components.forEach((component) => {
+  app.component(component.name, component)
+})
 
 app.mount('#app')

@@ -155,9 +155,6 @@
                 >Run</el-button
               >
             </el-form-item>
-            <!-- <el-form-item>
-            <el-button type="danger" plain round>Clear</el-button>
-          </el-form-item> -->
             <el-form-item>
               <el-button
                 type="success"
@@ -365,6 +362,3 @@ label {
   padding-right: 8px !important;
 }
 </style>
-
-https://gist.github.com/RiseupDev/b07f7ccc1c499efc24e9
-http://jsfiddle.net/SunboX/vj4jtdg8/
