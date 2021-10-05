@@ -235,7 +235,9 @@ export default {
   methods: {
     run() {
       let seats = seatAlloc(this.konva.getZones(), ...this.sizeSeatPixel(), this.gap * this.ratio)
-
+      for (let z of this.zones) {
+        this.konva.removeSeatsOfZone(z.id)
+      }
       this.konva.addSeats(seats)
     },
     addSeat() {
