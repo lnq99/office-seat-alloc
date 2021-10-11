@@ -137,7 +137,9 @@ class KonvaCanvas {
         width: e[2],
         height: e[3],
         rotation: e[4],
-        groupId: e[5]
+        groupId: e[5],
+        isWidthMajor: e[6],
+        isFlip: e[7]
       })
       this.resultLayer.add(newRect)
     })
