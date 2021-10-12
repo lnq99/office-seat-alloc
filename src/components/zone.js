@@ -24,9 +24,11 @@ class Zone extends Konva.Rect {
     const position = this.getAbsolutePosition()
     const rotation = this.getAbsoluteRotation()
 
+    let scale = this.getAbsoluteScale().x
+
     return {
-      x: position.x,
-      y: position.y,
+      x: position.x / scale,
+      y: position.y / scale,
       width: size.width,
       height: size.height,
       rotation: rotation,

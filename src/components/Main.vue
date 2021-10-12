@@ -170,7 +170,37 @@
       </el-card>
     </el-aside>
     <el-main class="board">
-      <el-card class="card" style="overflow: auto">
+      <el-card class="card" style="overflow: auto; position: relative">
+        <el-button
+          type="primary"
+          icon="el-icon-refresh"
+          class="btn-float"
+          style="top: 0"
+          circle
+          plain
+          @click="resetZoom"
+        >
+        </el-button>
+        <el-button
+          type="info"
+          icon="el-icon-zoom-in"
+          class="btn-float"
+          style="top: 48px"
+          circle
+          plain
+          @click="zoom(true)"
+        >
+        </el-button>
+        <el-button
+          type="info"
+          icon="el-icon-zoom-out"
+          class="btn-float"
+          style="top: 96px"
+          circle
+          plain
+          @click="zoom(false)"
+        >
+        </el-button>
         <div id="main">
           <div id="konva"></div>
         </div>
@@ -195,6 +225,9 @@ function downloadURI(uri, name) {
 export default {
   data() {
     return {
+      width: 0,
+      height: 0,
+      scale: 1,
       isFileLoaded: false,
       seatWidth: 2,
       seatHeight: 1.5,
@@ -241,7 +274,7 @@ export default {
       this.konva.addSeats(seats)
     },
     addSeat() {
-      this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0]])
+      this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
     },
     sizeSeatPixel() {
       return [this.seatWidth * this.ratio, this.seatHeight * this.ratio]
@@ -254,15 +287,22 @@ export default {
           this.svg.setAttribute('width', img.width)
           this.svg.setAttribute('height', img.height)
 
-          const main = document.getElementById('main')
-          main.setAttribute('style', `width: ${img.width + 4}px; height: ${img.height + 4}px`)
+          this.width = img.width
+          this.height = img.height
+
           this.konva = new KonvaCanvas('konva', img.width, img.height, this.control, img)
+          this.setCanvasSize()
           this.isFileLoaded = true
           this.calcRatio()
         }
         img.src = event.target.result
       }
       reader.readAsDataURL(e.target.files[0])
+    },
+    setCanvasSize() {
+      const main = document.getElementById('main')
+      main.setAttribute('style', `width: ${this.scale * this.width + 4}px; height: ${this.scale * this.height + 4}px`)
+
     },
     editAspectRatio() {
       this.isEditAspectRatio = !this.isEditAspectRatio
@@ -300,7 +340,18 @@ export default {
     },
     changeMainDirection() {
       this.konva.changeMainDirection(this.currentRow.id, ...this.sizeSeatPixel(), this.gap * this.ratio)
-    }
+    },
+    zoom(zoomIn) {
+      if (this.scale > 0.2 && this.scale < 4)
+        this.scale += zoomIn ? 0.1 : -0.1
+      this.setCanvasSize()
+      this.konva.setScale(this.scale)
+    },
+    resetZoom() {
+      this.konva.resetZoom()
+      this.scale = 1
+      this.setCanvasSize()
+    },
   }
 }
 </script>
@@ -332,6 +383,14 @@ export default {
   /* left: 0;
   right: 0; */
   margin-left: 4px;
+}
+
+.btn-float {
+  width: 40px;
+  position: absolute;
+  left: 0;
+  margin: 8px !important;
+  z-index: 1000;
 }
 </style>
 

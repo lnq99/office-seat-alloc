@@ -12,6 +12,8 @@ const tr = new Konva.Transformer({
 
 class KonvaCanvas {
   constructor(id, width, height, control, img) {
+    this.initWidth = width
+    this.initHeight = height
     this.stage = new Konva.Stage({ container: id, width, height })
     const stage = this.stage
 
@@ -43,7 +45,9 @@ class KonvaCanvas {
     stage.on('mousedown', function (e) {
       if (control.isCreatingZone) {
         mode = 'drawing'
-        selection.startDrag({ x: e.evt.layerX, y: e.evt.layerY })
+        // selection.startDrag({ x: e.evt.layerX, y: e.evt.layerY })
+        let pos = e.currentTarget.getRelativePointerPosition()
+        selection.startDrag(pos)
       }
     })
 
@@ -51,7 +55,8 @@ class KonvaCanvas {
     stage.on('mousemove', function (e) {
       if (control.isCreatingZone) {
         if (mode === 'drawing') {
-          selection.updateDrag({ x: e.evt.layerX, y: e.evt.layerY })
+          let pos = e.currentTarget.getRelativePointerPosition()
+          selection.updateDrag(pos)
           stage.batchDraw()
         }
       }
@@ -116,6 +121,19 @@ class KonvaCanvas {
         tr.nodes(nodes)
       }
     })
+  }
+
+  resetZoom() {
+    this.stage.width(this.initWidth)
+    this.stage.height(this.initHeight)
+    this.stage.scale({ x: 1, y: 1 })
+    this.stage.position({ x: 0, y: 0 })
+  }
+
+  setScale(scale) {
+    this.stage.width(this.initWidth * scale)
+    this.stage.height(this.initHeight * scale)
+    this.stage.scale({ x: scale, y: scale })
   }
 
   selectZone(zoneId) {
