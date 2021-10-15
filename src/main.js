@@ -16,7 +16,8 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElInputNumber
+  ElInputNumber,
+  ElPagination
 } from 'element-plus'
 
 const app = createApp(App)
@@ -34,7 +35,8 @@ const components = [
   ElForm,
   ElFormItem,
   ElInput,
-  ElInputNumber
+  ElInputNumber,
+  ElPagination
 ]
 components.forEach((component) => {
   app.component(component.name, component)

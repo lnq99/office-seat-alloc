@@ -12,11 +12,19 @@
             />
           </el-form-item>
           <div v-if="isFileLoaded">
+            <el-pagination
+              background
+              layout="prev, pager, next"
+              :page-size="1"
+              :total="3"
+              v-model:currentPage="currentPlan"
+            >
+            </el-pagination>
             <el-form-item label="Metric of plan (m)">
               <el-row>
                 <el-col :span="18">
                   <el-input-number
-                    v-model="sizeOnPlan"
+                    v-model="plan.sizeOnPlan"
                     :min="0"
                     :precision="2"
                     :step="0.1"
@@ -28,8 +36,8 @@
                     icon="el-icon-edit"
                     circle
                     style="width: 100%"
-                    :plain="!isEditAspectRatio"
-                    @click="editAspectRatio"
+                    :plain="!plan.isEditAspectRatio"
+                    @click="plan.editAspectRatio"
                   ></el-button>
                 </el-col>
               </el-row>
@@ -38,7 +46,7 @@
               <el-row>
                 <el-col :span="18">
                   <el-input-number
-                    v-model="gap"
+                    v-model="plan.gap"
                     :min="0"
                     :precision="2"
                     :step="0.1"
@@ -50,7 +58,7 @@
               <el-row>
                 <el-col :span="10">
                   <el-input-number
-                    v-model="seatWidth"
+                    v-model="plan.seatWidth"
                     :precision="2"
                     :step="0.1"
                     :min="0"
@@ -64,7 +72,7 @@
                 >
                 <el-col :span="10">
                   <el-input-number
-                    v-model="seatHeight"
+                    v-model="plan.seatHeight"
                     :precision="2"
                     :step="0.1"
                     :min="0"
@@ -81,8 +89,8 @@
                 icon="el-icon-plus"
                 round
                 style="margin-left: 0 !important"
-                :plain="!control.isCreatingZone"
-                @click="control.isCreatingZone = !control.isCreatingZone"
+                :plain="!plan.control.isCreatingZone"
+                @click="plan.creatingZone"
                 >zone
               </el-button>
               <el-button
@@ -91,7 +99,7 @@
                 round
                 plain
                 class="narrow"
-                @click="addSeat"
+                @click="plan.addSeat"
                 >seat
               </el-button>
               <el-button
@@ -101,7 +109,7 @@
                 circle
                 plain
                 class="narrow"
-                @click="changeMainDirection()"
+                @click="plan.changeMainDirection"
               ></el-button>
               <el-button
                 type="danger"
@@ -114,11 +122,11 @@
               ></el-button>
               <el-table
                 ref="zonesTable"
-                :data="zones"
+                :data="plan.zones"
                 height="240"
                 style="width: 100%"
                 highlight-current-row
-                @current-change="handleCurrentChange"
+                @current-change="plan.handleCurrentChange"
               >
                 <el-table-column
                   align="center"
@@ -161,7 +169,7 @@
                 class="cmd"
                 plain
                 round
-                @click="download"
+                @click="plan.download"
                 >Export</el-button
               >
             </el-form-item>
@@ -171,186 +179,101 @@
     </el-aside>
     <el-main class="board">
       <el-card class="card" style="overflow: auto; position: relative">
-        <el-button
-          type="primary"
-          icon="el-icon-refresh"
-          class="btn-float"
-          style="top: 0"
-          circle
-          plain
-          @click="resetZoom"
-        >
-        </el-button>
-        <el-button
-          type="info"
-          icon="el-icon-zoom-in"
-          class="btn-float"
-          style="top: 48px"
-          circle
-          plain
-          @click="zoom(true)"
-        >
-        </el-button>
-        <el-button
-          type="info"
-          icon="el-icon-zoom-out"
-          class="btn-float"
-          style="top: 96px"
-          circle
-          plain
-          @click="zoom(false)"
-        >
-        </el-button>
-        <div id="main">
-          <div id="konva"></div>
+        <div v-if="isFileLoaded">
+          <el-button
+            type="primary"
+            icon="el-icon-refresh"
+            class="btn-float"
+            style="top: 0"
+            circle
+            plain
+            @click="plan.resetZoom"
+          >
+          </el-button>
+          <el-button
+            type="info"
+            icon="el-icon-zoom-in"
+            class="btn-float"
+            style="top: 48px"
+            circle
+            plain
+            @click="plan.zoom(true)"
+          >
+          </el-button>
+          <el-button
+            type="info"
+            icon="el-icon-zoom-out"
+            class="btn-float"
+            style="top: 96px"
+            circle
+            plain
+            @click="plan.zoom(false)"
+          >
+          </el-button>
         </div>
+        <Plan
+          ref="plan"
+          @zonesUpdate="fetchZones"
+          @setCurrentRow="setCurrentRow"
+        ></Plan>
       </el-card>
     </el-main>
   </el-container>
 </template>
 
 <script>
-import seatAlloc from './algo'
-import KonvaCanvas from './konva'
-
-function downloadURI(uri, name) {
-  let link = document.createElement('a')
-  link.download = name
-  link.href = uri
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
+import Plan from './Plan.vue'
 
 export default {
+  components: { Plan },
   data() {
     return {
-      width: 0,
-      height: 0,
-      scale: 1,
       isFileLoaded: false,
-      seatWidth: 2,
-      seatHeight: 1.5,
-      sizeOnPlan: 8,
-      isEditAspectRatio: false,
-      control: {
-        isCreatingZone: false,
-        showMetric: false,
-        isSelectedZoneChanged: false,
-      },
-      currentRow: -1,
-      konva: null,
       zones: [],
-      ratio: 20,
-      gap: 0.8,
-    }
-  },
-  watch: {
-    'control.isCreatingZone'() {
-      this.fetchZones()
-    },
-    'control.isSelectedZoneChanged'() {
-      const id = this.konva.getSelectedZone()
-      const z = this.zones.filter(e => e.id == id)[0]
-      this.setCurrent(z)
+      plan: null,
+      currentPlan: 1,
     }
   },
   mounted() {
     this.imageLoader = document.getElementById('imageLoader')
     this.imageLoader.addEventListener('change', this.handleImage, false)
-    this.svg = document.getElementById('konva')
 
     window.addEventListener('keydown', (e) => {
       if (e.code == 'Delete')
         this.deleteCurrentZone()
     })
+
+    this.plan = this.$refs.plan
   },
   methods: {
     run() {
-      let seats = seatAlloc(this.konva.getZones(), ...this.sizeSeatPixel(), this.gap * this.ratio)
-      for (let z of this.zones) {
-        this.konva.removeSeatsOfZone(z.id)
-      }
-      this.konva.addSeats(seats)
-    },
-    addSeat() {
-      this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
-    },
-    sizeSeatPixel() {
-      return [this.seatWidth * this.ratio, this.seatHeight * this.ratio]
+      this.plan.run()
+      console.log(this.currentPlan)
     },
     handleImage(e) {
       const reader = new FileReader()
       reader.onload = (event) => {
         const img = new Image()
         img.onload = () => {
-          this.svg.setAttribute('width', img.width)
-          this.svg.setAttribute('height', img.height)
-
-          this.width = img.width
-          this.height = img.height
-
-          this.konva = new KonvaCanvas('konva', img.width, img.height, this.control, img)
-          this.setCanvasSize()
+          this.$refs.plan.loadImage(img)
           this.isFileLoaded = true
-          this.calcRatio()
         }
         img.src = event.target.result
       }
       reader.readAsDataURL(e.target.files[0])
     },
-    setCanvasSize() {
-      const main = document.getElementById('main')
-      main.setAttribute('style', `width: ${this.scale * this.width + 4}px; height: ${this.scale * this.height + 4}px`)
-
-    },
-    editAspectRatio() {
-      this.isEditAspectRatio = !this.isEditAspectRatio
-      this.konva.toggleMetricLine()
-      this.calcRatio()
-    },
-    setCurrent(row) {
+    setCurrentRow(row) {
       this.$refs.zonesTable.setCurrentRow(row)
     },
-    handleCurrentChange(val) {
-      this.currentRow = val
-      this.konva.selectZone(val.id)
-    },
     deleteCurrentZone() {
-      this.konva.removeSelected()
+      this.plan.konva.removeSelected()
       this.fetchZones()
     },
-    fetchZones() {
-      this.zones = this.konva.getZones()
+    fetchZones(zones) {
+      this.zones = zones
     },
     sizeFormatter(row, column, cellValue, index) {
       return cellValue.toFixed(2)
-    },
-    calcRatio() {
-      this.ratio = this.konva.getMetricPixel() / this.sizeOnPlan
-    },
-    download() {
-      if (this.isEditAspectRatio)
-        this.editAspectRatio()
-
-      this.konva.toggleZones()
-      let dataURL = this.konva.stage.toDataURL({ pixelRatio: 1 })
-      downloadURI(dataURL, 'stage.png')
-      this.konva.toggleZones()
-    },
-    changeMainDirection() {
-      this.konva.changeMainDirection(this.currentRow.id, ...this.sizeSeatPixel(), this.gap * this.ratio)
-    },
-    zoom(zoomIn) {
-      if (this.scale > 0.2 && this.scale < 4)
-        this.scale += zoomIn ? 0.1 : -0.1
-      this.setCanvasSize()
-      this.konva.setScale(this.scale)
-    },
-    resetZoom() {
-      this.konva.resetZoom()
-      this.scale = 1
-      this.setCanvasSize()
     },
   }
 }
@@ -365,24 +288,6 @@ export default {
 .card {
   height: calc(100% - 2px);
   overflow-y: auto;
-}
-
-#main {
-  overflow: auto;
-  position: relative;
-  padding: 2px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#konva {
-  outline: #666 2px solid;
-  /* position: absolute; */
-  margin-left: auto;
-  margin-right: auto;
-  /* left: 0;
-  right: 0; */
-  margin-left: 4px;
 }
 
 .btn-float {
@@ -404,7 +309,7 @@ label {
   width: 68px;
 }
 .el-button.narrow {
-  margin-left: 8px !important;
+  margin-left: 6px !important;
 }
 .el-button > span {
   margin-left: 2px !important;
