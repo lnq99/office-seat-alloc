@@ -16,7 +16,7 @@
               background
               layout="prev, pager, next"
               :page-size="1"
-              :total="3"
+              :total="imgList.length"
               v-model:currentPage="currentPlan"
             >
             </el-pagination>
@@ -212,6 +212,7 @@
           </el-button>
         </div>
         <Plan
+          v-if="isFileLoaded"
           ref="plan"
           @zonesUpdate="fetchZones"
           @setCurrentRow="setCurrentRow"
@@ -219,19 +220,29 @@
       </el-card>
     </el-main>
   </el-container>
+  <el-dialog
+    title="Upload floor plan"
+    v-model="isOpenUpload"
+    width="max(40%, 400px)"
+    center
+  >
+    <upload @upload="onUpload"></upload>
+  </el-dialog>
 </template>
 
 <script>
 import Plan from './Plan.vue'
+import Upload from './Upload.vue'
 
 export default {
-  components: { Plan },
+  components: { Plan, Upload },
   data() {
     return {
-      isFileLoaded: false,
       zones: [],
       plan: null,
-      currentPlan: 1,
+      currentPlan: -1,
+      isOpenUpload: true,
+      imgList: [],
     }
   },
   mounted() {
@@ -244,6 +255,19 @@ export default {
     })
 
     this.plan = this.$refs.plan
+  },
+  computed: {
+    isFileLoaded() {
+      console.log(this.isFileLoaded)
+      return this.imgList.length > 0 && !this.isOpenUpload
+    }
+  },
+  watch: {
+    currentPlan(newPlan) {
+      console.log(newPlan)
+      const img = this.imgList[newPlan - 1]
+      this.$refs.plan.loadImage(img.img)
+    },
   },
   methods: {
     run() {
@@ -275,6 +299,10 @@ export default {
     sizeFormatter(row, column, cellValue, index) {
       return cellValue.toFixed(2)
     },
+    onUpload(imgList) {
+      this.imgList = imgList
+      console.log(this.imgList)
+    }
   }
 }
 </script>
