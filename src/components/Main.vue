@@ -211,12 +211,35 @@
           >
           </el-button>
         </div>
-        <Plan
-          v-if="isFileLoaded"
-          ref="plan"
-          @zonesUpdate="fetchZones"
-          @setCurrentRow="setCurrentRow"
-        ></Plan>
+        <!-- <keep-alive>
+          <div id="main">
+            <div v-for="i in imgList.length" :key="imgList[i - 1].name">
+              <Plan
+                v-if="i == currentPlan"
+                :name="imgList[i - 1].name"
+                :img="imgList[i - 1].img"
+                ref="plan"
+                :class="{ 'disable-event': i != currentPlan }"
+                @zonesUpdate="fetchZones"
+                @setCurrentRow="setCurrentRow"
+              ></Plan>
+            </div>
+          </div>
+        </keep-alive> -->
+
+        <div id="main">
+          <Plan
+            v-for="i in imgList.length"
+            :key="imgList[i - 1].name"
+            v-show="i == currentPlan"
+            :name="imgList[i - 1].name"
+            :img="imgList[i - 1].img"
+            :ref="setItemRef"
+            :class="{ 'disable-event': i != currentPlan }"
+            @zonesUpdate="fetchZones"
+            @setCurrentRow="setCurrentRow"
+          ></Plan>
+        </div>
       </el-card>
     </el-main>
   </el-container>
@@ -243,6 +266,7 @@ export default {
       currentPlan: -1,
       isOpenUpload: true,
       imgList: [],
+      itemRefs: []
     }
   },
   mounted() {
@@ -258,33 +282,36 @@ export default {
   },
   computed: {
     isFileLoaded() {
-      console.log(this.isFileLoaded)
       return this.imgList.length > 0 && !this.isOpenUpload
     }
   },
   watch: {
     currentPlan(newPlan) {
-      console.log(newPlan)
-      const img = this.imgList[newPlan - 1]
-      this.$refs.plan.loadImage(img.img)
+      // console.log(newPlan, this.imgList)
+      // const img = this.imgList[newPlan - 1]
+      // this.$refs.plan.loadImage(img.img)
+      console.log(this.itemRefs)
+      this.plan = this.itemRefs[this.currentPlan - 1]
+      this.plan.setCanvasSize()
+      this.itemRefs = []
     },
+    isOpenUpload(old) {
+      console.log(old)
+      // this.plan = this.$refs.plan
+    },
+    isFileLoaded(loaded) {
+      if (loaded) {
+        // console.log(this.itemRefs)
+        // this.plan = this.itemRefs[this.currentPlan - 1]
+        // [this.currentPlan - 1]
+        this.currentPlan = 1
+      }
+    }
   },
   methods: {
     run() {
       this.plan.run()
       console.log(this.currentPlan)
-    },
-    handleImage(e) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const img = new Image()
-        img.onload = () => {
-          this.$refs.plan.loadImage(img)
-          this.isFileLoaded = true
-        }
-        img.src = event.target.result
-      }
-      reader.readAsDataURL(e.target.files[0])
     },
     setCurrentRow(row) {
       this.$refs.zonesTable.setCurrentRow(row)
@@ -302,8 +329,20 @@ export default {
     onUpload(imgList) {
       this.imgList = imgList
       console.log(this.imgList)
-    }
-  }
+    },
+    setItemRef(el) {
+      if (el) {
+        this.itemRefs.push(el)
+      }
+    },
+  },
+  // beforeUpdate() {
+  //   this.itemRefs = []
+  //   console.log('before')
+  // },
+  // updated() {
+  //   console.log(this.itemRefs)
+  // }
 }
 </script>
 
@@ -324,6 +363,14 @@ export default {
   left: 0;
   margin: 8px !important;
   z-index: 1000;
+}
+
+#main {
+  overflow: auto;
+  padding: 2px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 0;
 }
 </style>
 
@@ -354,5 +401,9 @@ label {
 .cell {
   padding-left: 8px !important;
   padding-right: 8px !important;
+}
+
+.disable-event {
+  pointer-events: none;
 }
 </style>

@@ -1,7 +1,6 @@
 <template>
-  <div id="main">
-    <div id="konva"></div>
-  </div>
+  <div class="konva" :id="name"></div>
+  <!-- <div id="konva"></div> -->
 </template>
 
 <script>
@@ -18,6 +17,7 @@ function downloadURI(uri, name) {
 }
 
 export default {
+  props: ['img', 'name'],
   data() {
     return {
       width: 0,
@@ -52,7 +52,8 @@ export default {
     }
   },
   mounted() {
-    this.svg = document.getElementById('konva')
+
+    this.loadImage(this.img)
   },
   methods: {
     run() {
@@ -66,26 +67,27 @@ export default {
       this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
     },
     creatingZone() {
+      console.log(this.name)
       this.control.isCreatingZone = !this.control.isCreatingZone
     },
     sizeSeatPixel() {
       return [this.seatWidth * this.ratio, this.seatHeight * this.ratio]
     },
     loadImage(img) {
-      this.svg.setAttribute('width', img.width)
-      this.svg.setAttribute('height', img.height)
+      const svg = document.getElementById(this.name)
+      svg.setAttribute('width', img.width)
+      svg.setAttribute('height', img.height)
 
       this.width = img.width
       this.height = img.height
 
-      this.konva = new KonvaCanvas('konva', img.width, img.height, this.control, img)
+      this.konva = new KonvaCanvas(this.name, img.width, img.height, this.control, img)
       this.setCanvasSize()
       this.calcRatio()
     },
     setCanvasSize() {
       const main = document.getElementById('main')
       main.setAttribute('style', `width: ${this.scale * this.width + 4}px; height: ${this.scale * this.height + 4}px`)
-
     },
     editAspectRatio() {
       this.isEditAspectRatio = !this.isEditAspectRatio
@@ -147,7 +149,7 @@ export default {
   width: 0;
 }
 
-#konva {
+.konva {
   outline: #666 2px solid;
   margin-left: 4px;
 }

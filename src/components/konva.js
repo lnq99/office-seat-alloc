@@ -6,10 +6,6 @@ import seatAlloc from './algo'
 
 // debugger // eslint-disable-line no-debugger
 
-const tr = new Konva.Transformer({
-  boundBoxFunc: (oldBox, newBox) => newBox
-})
-
 class KonvaCanvas {
   constructor(id, width, height, control, img) {
     this.initWidth = width
@@ -33,6 +29,11 @@ class KonvaCanvas {
     const topLayer = new Konva.Layer({ draggable: false })
     stage.add(topLayer)
     // layer.add(tr)
+
+    this.tr = new Konva.Transformer({
+      boundBoxFunc: (oldBox, newBox) => newBox
+    })
+    const tr = this.tr
     topLayer.add(tr)
 
     this._addMetricLine(layer)
@@ -140,11 +141,13 @@ class KonvaCanvas {
     let z = this.layer.children.filter(
       (e) => e instanceof Zone && e._id == zoneId
     )[0]
-    tr.nodes([z])
+    this.tr.nodes([z])
   }
 
   getSelectedZone() {
-    return tr.nodes().filter((e) => e instanceof Zone)[0]._id
+    let z = this.tr.nodes().filter((e) => e instanceof Zone)[0]
+    if (z) return z._id
+    return -1
   }
 
   addSeats(seats) {
@@ -164,7 +167,7 @@ class KonvaCanvas {
   }
 
   removeSelected() {
-    tr.nodes().forEach((e) => {
+    this.tr.nodes().forEach((e) => {
       if (e.name() == 'zone') {
         this.removeSeatsOfZone(e._id)
       }
@@ -261,7 +264,7 @@ class KonvaCanvas {
       .filter((e) => e instanceof Zone)
       .forEach((e) => e.visible(!e.visible()))
 
-    tr.nodes([])
+    this.tr.nodes([])
   }
 
   changeMainDirection(zoneId, seatWidth, seatHeight, gap) {
