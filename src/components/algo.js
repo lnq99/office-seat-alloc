@@ -1,12 +1,9 @@
 export default function seatAlloc(zones, seatWidth, seatHeight, gap) {
   let res = []
   for (let z of zones) {
-    let [w, h] = z.isWidthMajor
-      ? [seatWidth, seatHeight]
-      : [seatHeight, seatWidth]
+    let [w, h] =
+      z.dir % 2 == 0 ? [seatWidth, seatHeight] : [seatHeight, seatWidth]
 
-    // let [w, h] = [seatWidth, seatHeight]
-    // let rot = z.rotation + (z.isWidthMajor ? 0 : 90)
     seatAllocOneRect(z, seatWidth, seatHeight, gap).forEach((point) => {
       res.push([
         z.x + point[0],
@@ -15,7 +12,7 @@ export default function seatAlloc(zones, seatWidth, seatHeight, gap) {
         h,
         z.rotation,
         z.id,
-        z.isWidthMajor,
+        z.dir,
         point[2] // isFlip
       ])
     })
@@ -31,7 +28,7 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
   let wGap, hGap
   let vw, vh, v
 
-  if (rect.isWidthMajor) {
+  if (rect.dir % 2 == 0) {
     ;[wArr, hArr, wGap, hGap] = allocGrid(
       width,
       height,
@@ -51,6 +48,16 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     ;[vw, vh, v] = vecStride(seatHeight, seatWidth, rotation)
   }
 
+  let isFlip = false
+
+  if (rect.dir == 1) {
+    wArr = wArr.reverse()
+    isFlip = !!wArr[0]
+  } else if (rect.dir == 2) {
+    hArr = hArr.reverse()
+    isFlip = !!hArr[0]
+  }
+
   let gw = [v[0] * wGap, -v[1] * wGap]
   let gh = [v[1] * hGap, v[0] * hGap]
 
@@ -58,8 +65,6 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
 
   let x = 0,
     y = 0
-
-  let isFlip = false
 
   for (let i = 0; i < hArr.length; i++) {
     if (hArr[i]) {
@@ -70,7 +75,7 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
     let xi = x,
       yi = y
 
-    if (!rect.isWidthMajor) isFlip = false
+    if (rect.dir % 2) isFlip = !!wArr[0]
     for (let j = 0; j < wArr.length; j++) {
       if (wArr[j]) {
         xi += gw[0]
@@ -79,12 +84,38 @@ function seatAllocOneRect(rect, seatWidth, seatHeight, gap) {
         res.push([xi, yi, isFlip])
         xi += vw[0]
         yi += vw[1]
-        if (!rect.isWidthMajor) isFlip = !isFlip
+        if (rect.dir % 2) isFlip = !isFlip
       }
     }
     x += vh[0]
     y += vh[1]
-    if (rect.isWidthMajor) isFlip = !isFlip
+    if (rect.dir % 2 == 0) isFlip = !isFlip
+  }
+
+  let dw, dh
+  if (rect.dir % 2 == 0) {
+    ;[dw, dh] = [seatWidth, seatHeight]
+  } else {
+    ;[dw, dh] = [seatHeight, seatWidth]
+  }
+  let [vwidth, vheight, _] = vecStride(width - dw, height - dh, rotation)
+
+  if (rect.dir == 0) {
+    if (wGap > seatWidth) {
+      allocFirstLast(res, [0, 0], wArr, hArr, vw, gw, vheight)
+    }
+  } else if (rect.dir == 1) {
+    if (hGap > seatWidth) {
+      allocFirstLast(res, vwidth, hArr, wArr, vh, gh, neg(vwidth), true)
+    }
+  } else if (rect.dir == 2) {
+    if (wGap > seatWidth) {
+      allocFirstLast(res, vheight, wArr, hArr, vw, gw, neg(vheight), true)
+    }
+  } else if (rect.dir == 3) {
+    if (hGap > seatWidth) {
+      allocFirstLast(res, [0, 0], hArr, wArr, vh, gh, vwidth)
+    }
   }
 
   return res
@@ -109,7 +140,9 @@ function allocGrid(mainSize, crossSize, seatWidth, seatHeight, gap) {
   let lenLeft = mainSize - gap
   n = Math.floor(lenLeft / seatWidth)
   lenLeft = mainSize - n * seatWidth
-  nGap = Math.min(Math.floor(lenLeft / gap), n - 1)
+
+  // decrease number of gap: n-1 -> n//2
+  nGap = Math.min(Math.floor(lenLeft / gap), Math.max(Math.floor(n / 2), 1))
   mainGap = lenLeft / nGap
 
   let seatWidthIfGapEqualy = (n * seatWidth) / (nGap + 1)
@@ -139,4 +172,29 @@ function allocGrid(mainSize, crossSize, seatWidth, seatHeight, gap) {
   }
 
   return [mainArr, crossArr, mainGap, crossGap]
+}
+
+function allocFirstLast(
+  res,
+  start,
+  wArr,
+  hArr,
+  vw,
+  gw,
+  vCross,
+  firstFlip = false
+) {
+  let i = wArr.findIndex((e) => e > 0)
+  let x0 = start[0] + vw[0] * i + (gw[0] - vw[0]) / 2
+  let y0 = start[1] + vw[1] * i + (gw[1] - vw[1]) / 2
+  res.push([x0, y0, firstFlip])
+
+  let l = hArr.length
+  if (l % 3 == 0) {
+    res.push([vCross[0] + x0, vCross[1] + y0, !firstFlip])
+  }
+}
+
+function neg(v) {
+  return [-v[0], -v[1]]
 }

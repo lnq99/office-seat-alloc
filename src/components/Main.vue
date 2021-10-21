@@ -162,7 +162,6 @@
                   prop="rotation"
                   label="Rotation"
                   width="76"
-                  :formatter="sizeFormatter"
                 />
               </el-table>
             </el-form-item>
@@ -220,21 +219,6 @@
           >
           </el-button>
         </div>
-        <!-- <keep-alive>
-          <div id="main">
-            <div v-for="i in imgList.length" :key="imgList[i - 1].name">
-              <Plan
-                v-if="i == currentPlan"
-                :name="imgList[i - 1].name"
-                :img="imgList[i - 1].img"
-                ref="plan"
-                :class="{ 'disable-event': i != currentPlan }"
-                @zonesUpdate="fetchZones"
-                @setCurrentRow="setCurrentRow"
-              ></Plan>
-            </div>
-          </div>
-        </keep-alive> -->
 
         <div id="main">
           <Plan
@@ -244,7 +228,6 @@
             :name="imgList[i - 1].name"
             :img="imgList[i - 1].img"
             :ref="setItemRef"
-            :class="{ 'disable-event': i != currentPlan }"
             @zonesUpdate="fetchZones"
             @setCurrentRow="setCurrentRow"
           ></Plan>
@@ -300,31 +283,20 @@ export default {
   },
   watch: {
     currentPlan(newPlan) {
-      // console.log(newPlan, this.imgList)
-      // const img = this.imgList[newPlan - 1]
-      // this.$refs.plan.loadImage(img.img)
-      console.log(this.itemRefs)
       this.plan = this.itemRefs[this.currentPlan - 1]
       this.plan.setCanvasSize()
       this.itemRefs = []
     },
-    isOpenUpload(old) {
-      console.log(old)
-      // this.plan = this.$refs.plan
-    },
     isFileLoaded(loaded) {
       if (loaded) {
-        // console.log(this.itemRefs)
-        // this.plan = this.itemRefs[this.currentPlan - 1]
-        // [this.currentPlan - 1]
         this.currentPlan = 1
+        console.log(this.imgList)
       }
     }
   },
   methods: {
     run() {
       this.plan.run()
-      console.log(this.currentPlan)
     },
     setCurrentRow(row) {
       this.$refs.zonesTable.setCurrentRow(row)
@@ -341,7 +313,6 @@ export default {
     },
     onUpload(imgList) {
       this.imgList = imgList
-      console.log(this.imgList)
     },
     setItemRef(el) {
       if (el) {
@@ -349,13 +320,6 @@ export default {
       }
     },
   },
-  // beforeUpdate() {
-  //   this.itemRefs = []
-  //   console.log('before')
-  // },
-  // updated() {
-  //   console.log(this.itemRefs)
-  // }
 }
 </script>
 
@@ -414,10 +378,6 @@ label {
 .cell {
   padding-left: 8px !important;
   padding-right: 8px !important;
-}
-
-.disable-event {
-  pointer-events: none;
 }
 
 .el-pager > .number {

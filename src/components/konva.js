@@ -159,7 +159,7 @@ class KonvaCanvas {
         height: e[3],
         rotation: e[4],
         groupId: e[5],
-        isWidthMajor: e[6],
+        isWidthMajor: e[6] % 2 == 0,
         isFlip: e[7]
       })
       this.resultLayer.add(newRect)
@@ -274,7 +274,8 @@ class KonvaCanvas {
     let z
     for (let e of this.layer.children) {
       if (e._id == zoneId) {
-        e.isWidthMajor = !e.isWidthMajor
+        e.dir++
+        e.dir %= 4
         z = e.getInfo()
         break
       }

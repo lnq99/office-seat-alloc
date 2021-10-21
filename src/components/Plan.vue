@@ -66,7 +66,6 @@ export default {
       this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
     },
     creatingZone() {
-      console.log(this.name)
       this.control.isCreatingZone = !this.control.isCreatingZone
     },
     sizeSeatPixel() {
@@ -103,7 +102,11 @@ export default {
       this.fetchZones()
     },
     fetchZones() {
-      this.zones = this.konva.getZones()
+      this.zones = this.konva.getZones().map((z) => {
+        z.width /= this.ratio
+        z.height /= this.ratio
+        return z
+      })
       this.$emit('zonesUpdate', this.zones)
     },
     sizeFormatter(row, column, cellValue, index) {

@@ -31,7 +31,6 @@ export default {
   methods: {
     handleFileRemove(file, fileList) {
       this.imgList = this.imgList.filter(e => e.name != file.name)
-      console.log(this.imgList)
     },
     handleFileRequest(request) {
       let fr = new FileReader()
