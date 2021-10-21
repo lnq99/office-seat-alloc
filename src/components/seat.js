@@ -73,3 +73,14 @@ class Seat extends Konva.Rect {
 }
 
 export default Seat
+
+// new Seat({
+//   x: float (m),
+//   y: float (m),
+//   width: float (m),
+//   height: float (m),
+//   rotation: float (radius),
+//   groupId: int (zoneId),
+//   isWidthMajor: boolean (orientation, horizontal/vertical),
+//   isFlip: boolean (relative position between desk and chair)
+// })

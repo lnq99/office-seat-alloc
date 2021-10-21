@@ -1,12 +1,12 @@
 <template>
   <el-upload
     class="upload"
-    drag
     :on-remove="handleFileRemove"
-    :file-list="imgList"
-    :limit="5"
-    action=""
     :http-request="handleFileRequest"
+    :file-list="imgList"
+    :limit="4"
+    drag
+    action=""
     accept=".png, .jpg, .jpeg"
   >
     <i class="el-icon-upload" style="margin-top: 16px"></i>
@@ -58,3 +58,18 @@ export default {
   }
 }
 </script>
+<style scoped>
+.upload {
+  width: fit-content;
+  margin: auto;
+}
+</style>
+
+<style>
+.el-upload-dragger {
+  width: 400px !important;
+  height: 200px !important;
+  padding: 24px;
+  line-height: 1.5em;
+}
+</style>

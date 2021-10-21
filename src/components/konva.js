@@ -191,6 +191,7 @@ class KonvaCanvas {
     const line = new Konva.Line({
       points: [50, 50, 200, 50],
       stroke: 'green',
+      strokeWidth: 2,
       name: 'metric'
     })
     layer.add(line)
@@ -198,7 +199,7 @@ class KonvaCanvas {
     const anchor1 = new Konva.Circle({
       x: line.points()[0],
       y: line.points()[1],
-      radius: 5,
+      radius: 6,
       fill: 'lightgreen',
       opacity: 0.5,
       draggable: true,
@@ -209,7 +210,7 @@ class KonvaCanvas {
     const anchor2 = new Konva.Circle({
       x: line.points()[2],
       y: line.points()[3],
-      radius: 5,
+      radius: 6,
       fill: 'lightgreen',
       opacity: 0.5,
       draggable: true,

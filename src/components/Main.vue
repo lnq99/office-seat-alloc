@@ -4,22 +4,31 @@
       <el-card class="aside card">
         <el-form label-position="top">
           <el-form-item label="Floor plan">
-            <input
-              type="file"
-              id="imageLoader"
-              accept=".png, .jpg, .jpeg"
-              :disabled="isFileLoaded"
-            />
+            <el-row>
+              <el-col :span="18">
+                <el-pagination
+                  v-show="imgList.length"
+                  background
+                  layout="pager"
+                  :page-size="1"
+                  :total="imgList.length"
+                  v-model:currentPage="currentPlan"
+                >
+                </el-pagination>
+              </el-col>
+              <el-col :span="4" :offset="2">
+                <el-button
+                  type="info"
+                  icon="el-icon-plus"
+                  circle
+                  style="width: 100%"
+                  plain
+                  @click="isOpenUpload = true"
+                ></el-button>
+              </el-col>
+            </el-row>
           </el-form-item>
           <div v-if="isFileLoaded">
-            <el-pagination
-              background
-              layout="prev, pager, next"
-              :page-size="1"
-              :total="imgList.length"
-              v-model:currentPage="currentPlan"
-            >
-            </el-pagination>
             <el-form-item label="Metric of plan (m)">
               <el-row>
                 <el-col :span="18">
@@ -246,7 +255,7 @@
   <el-dialog
     title="Upload floor plan"
     v-model="isOpenUpload"
-    width="max(40%, 400px)"
+    width="min(60%, 500px)"
     center
   >
     <upload @upload="onUpload"></upload>
@@ -270,9 +279,6 @@ export default {
     }
   },
   mounted() {
-    this.imageLoader = document.getElementById('imageLoader')
-    this.imageLoader.addEventListener('change', this.handleImage, false)
-
     window.addEventListener('keydown', (e) => {
       if (e.code == 'Delete')
         this.deleteCurrentZone()
@@ -405,5 +411,9 @@ label {
 
 .disable-event {
   pointer-events: none;
+}
+
+.el-pager > number {
+  margin: 0;
 }
 </style>
