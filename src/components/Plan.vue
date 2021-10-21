@@ -1,6 +1,5 @@
 <template>
   <div class="konva" :id="name"></div>
-  <!-- <div id="konva"></div> -->
 </template>
 
 <script>
@@ -23,9 +22,9 @@ export default {
       width: 0,
       height: 0,
       scale: 1,
-      seatWidth: 2,
+      seatWidth: 1.8,
       seatHeight: 1.5,
-      sizeOnPlan: 8,
+      sizeOnPlan: 5,
       isEditAspectRatio: false,
       control: {
         isCreatingZone: false,
@@ -36,7 +35,7 @@ export default {
       konva: null,
       zones: [],
       ratio: 20,
-      gap: 0.8,
+      gap: 0.6,
     }
   },
   watch: {

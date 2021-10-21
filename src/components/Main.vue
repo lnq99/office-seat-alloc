@@ -260,6 +260,13 @@
   >
     <upload @upload="onUpload"></upload>
   </el-dialog>
+  <img
+    style="display: none"
+    id="seat"
+    src="assets/desk1_color.png"
+    width="64"
+    height="64"
+  />
 </template>
 
 <script>
@@ -413,7 +420,7 @@ label {
   pointer-events: none;
 }
 
-.el-pager > number {
-  margin: 0;
+.el-pager > .number {
+  margin: 0 6px 0 0 !important;
 }
 </style>

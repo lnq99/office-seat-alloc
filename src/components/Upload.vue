@@ -4,7 +4,7 @@
     :on-remove="handleFileRemove"
     :http-request="handleFileRequest"
     :file-list="imgList"
-    :limit="4"
+    :limit="5"
     drag
     action=""
     accept=".png, .jpg, .jpeg"
