@@ -5,6 +5,8 @@
 <script>
 import seatAlloc from './algo'
 import KonvaCanvas from './konva'
+import getObjBoxes from './detect'
+
 
 function downloadURI(uri, name) {
   let link = document.createElement('a')
@@ -36,6 +38,7 @@ export default {
       zones: [],
       ratio: 20,
       gap: 0.6,
+      boxes: [],
     }
   },
   watch: {
@@ -51,16 +54,19 @@ export default {
     }
   },
   mounted() {
-
     this.loadImage(this.img)
   },
   methods: {
     run() {
+      this.detect()
       let seats = seatAlloc(this.konva.getZones(), ...this.sizeSeatPixel(), this.gap * this.ratio)
       for (let z of this.zones) {
         this.konva.removeSeatsOfZone(z.id)
       }
-      this.konva.addSeats(seats)
+      this.konva.addSeats(seats, this.boxes)
+    },
+    detect() {
+      this.boxes = getObjBoxes(this.name)
     },
     addSeat() {
       this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
@@ -125,7 +131,7 @@ export default {
       this.konva.toggleZones()
     },
     changeMainDirection() {
-      this.konva.changeMainDirection(this.currentRow.id, ...this.sizeSeatPixel(), this.gap * this.ratio)
+      this.konva.changeMainDirection(this.currentRow.id, ...this.sizeSeatPixel(), this.gap * this.ratio, this.boxes)
     },
     zoom(zoomIn) {
       if (this.scale > 0.2 && this.scale < 4)

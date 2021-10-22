@@ -4,7 +4,14 @@ import Seat from './seat'
 import Selection from './selection'
 import seatAlloc from './algo'
 
-// debugger // eslint-disable-line no-debugger
+function haveIntersection(r1, r2) {
+  return !(
+    r2.x > r1.x + r1.width ||
+    r2.x + r2.width < r1.x ||
+    r2.y > r1.y + r1.height ||
+    r2.y + r2.height < r1.y
+  )
+}
 
 class KonvaCanvas {
   constructor(id, width, height, control, img) {
@@ -13,11 +20,14 @@ class KonvaCanvas {
     this.stage = new Konva.Stage({ container: id, width, height })
     const stage = this.stage
 
+    this.background = new Konva.Layer({ draggable: false })
+    this.background.getCanvas()._canvas.id = `c${id}`
+    stage.add(this.background)
+    const bg = this.setBackground(img)
+
     this.layer = new Konva.Layer({ draggable: false })
     const layer = this.layer
     stage.add(layer)
-
-    const bg = this.setBackground(img)
 
     this.resultLayer = new Konva.Layer({ draggable: false })
     const resultLayer = this.resultLayer
@@ -150,7 +160,7 @@ class KonvaCanvas {
     return -1
   }
 
-  addSeats(seats) {
+  addSeats(seats, boxes = null) {
     seats.forEach((e) => {
       let newRect = new Seat({
         x: e[0],
@@ -162,7 +172,17 @@ class KonvaCanvas {
         isWidthMajor: e[6] % 2 == 0,
         isFlip: e[7]
       })
-      this.resultLayer.add(newRect)
+
+      let flag = true
+      if (boxes)
+        for (let b of boxes) {
+          if (haveIntersection(newRect.getClientRect(), b)) {
+            flag = false
+            break
+          }
+        }
+
+      if (flag) this.resultLayer.add(newRect)
     })
   }
 
@@ -254,8 +274,8 @@ class KonvaCanvas {
       draggable: false
     })
 
-    this.layer.add(bg)
-    this.layer.draw()
+    this.background.add(bg)
+    this.background.draw()
 
     return bg
   }
@@ -268,7 +288,7 @@ class KonvaCanvas {
     this.tr.nodes([])
   }
 
-  changeMainDirection(zoneId, seatWidth, seatHeight, gap) {
+  changeMainDirection(zoneId, seatWidth, seatHeight, gap, boxes) {
     this.removeSeatsOfZone(zoneId)
 
     let z
@@ -281,7 +301,7 @@ class KonvaCanvas {
       }
     }
 
-    this.addSeats(seatAlloc([z], seatWidth, seatHeight, gap))
+    this.addSeats(seatAlloc([z], seatWidth, seatHeight, gap), boxes)
   }
 }
 

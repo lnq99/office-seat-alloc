@@ -4,6 +4,8 @@ class Zone extends Konva.Rect {
   constructor(obj) {
     obj.name = 'zone'
     obj.fill = '#87ceeb80'
+    // obj.fill = '#00000010'
+    // obj.stroke = '#1118'
     obj.draggable = true
     super(obj)
 

@@ -274,6 +274,10 @@ export default {
         this.deleteCurrentZone()
     })
 
+    // let cvScript = document.createElement('script')
+    // cvScript.setAttribute('src', 'https://docs.opencv.org/4.5.4/opencv.js')
+    // document.head.appendChild(cvScript)
+
     this.plan = this.$refs.plan
   },
   computed: {
