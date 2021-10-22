@@ -69,7 +69,7 @@ export default {
       this.boxes = getObjBoxes(this.name)
     },
     addSeat() {
-      this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, true]])
+      this.konva.addSeats([[0, 0, ...this.sizeSeatPixel(), 0, 0, 0, false]])
     },
     creatingZone() {
       this.control.isCreatingZone = !this.control.isCreatingZone

@@ -294,7 +294,7 @@ export default {
     isFileLoaded(loaded) {
       if (loaded) {
         this.currentPlan = 1
-        console.log(this.imgList)
+        // console.log(this.imgList)
       }
     }
   },
